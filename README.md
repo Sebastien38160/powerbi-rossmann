@@ -131,13 +131,14 @@ qui permet de séparer effet parc et effet performance.
 1. Télécharger les fichiers CSV depuis
    [Kaggle](https://www.kaggle.com/competitions/rossmann-store-sales)
 2. Cloner ce dépôt
-3. Ouvrir `report/Projet_Analyse_Retail_Rossmann.pbip` avec Power BI Desktop
+3. Ouvrir `Projet_Analyse_Retail_Rossmann.pbip` avec Power BI Desktop
    (version de mai 2024 ou ultérieure)
 4. Mettre à jour les chemins des sources dans Power Query
 
 Le format `.pbip` stocke le rapport et le modèle en fichiers texte : le
 contenu est lisible et comparable directement sur GitHub, contrairement au
-`.pbix`.
+`.pbix`. Chaque page, chaque visuel et chaque mesure est un fichier
+consultable en ligne.
 
 ---
 
@@ -146,12 +147,18 @@ contenu est lisible et comparable directement sur GitHub, contrairement au
 ```
 ├── README.md
 ├── LICENSE
-├── images/                  Captures des pages du rapport
-├── report/                  Projet Power BI au format .pbip
-└── dax/                     Code DAX réutilisable
-    ├── calendrier.dax       Table de dates continue et complète
-    └── generateur-mesures.csx Script Tabular Editor
+├── Projet_Analyse_Retail_Rossmann.pbip           Point d'entrée Power BI
+├── Projet_Analyse_Retail_Rossmann.Report/        Pages et visuels
+├── Projet_Analyse_Retail_Rossmann.SemanticModel/ Tables, relations, mesures
+├── images/                                       Captures des pages
+└── dax/
+    ├── calendrier.dax           Table de dates continue et complète
+    └── generateur-mesures.csx   Script Tabular Editor de génération
 ```
+
+Le format `.pbip` sépare le rapport du modèle sémantique en deux dossiers de
+fichiers texte. Le `.pbip` est le point d'entrée qui relie les deux : les
+trois doivent rester au même niveau.
 
 ---
 
@@ -172,3 +179,4 @@ promotions ponctuelles. Les deux effets ne sont pas isolés l'un de l'autre.
 ## Licence
 
 MIT — voir [LICENSE](LICENSE).
+
