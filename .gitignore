@@ -1,0 +1,19 @@
+# Donnees sources : a telecharger depuis Kaggle, jamais versionnees
+*.csv
+*.xlsx
+data/
+
+# Fichiers Power BI binaires
+*.pbix
+*.pbit
+
+# Cache et fichiers temporaires Power BI Project
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+**/.pbi/*.tmp
+.pbi/
+
+# Systeme
+Thumbs.db
+.DS_Store
+desktop.ini

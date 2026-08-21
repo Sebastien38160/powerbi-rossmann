@@ -1,0 +1,1028 @@
+table _Mesures
+	lineageTag: b8926a1b-7fd1-4649-8258-b04a36b4e031
+
+	/// Chiffre d'affaires total
+	measure 'CA Total' =
+			-- =============================================
+			-- MESURE : CA Total
+			-- Dossier : 01 - KPI de base
+			-- =============================================
+			-- Description :
+			--   Additionne toutes les lignes de ventes de la table de faits.
+			--   C'est la mesure fondamentale du modèle, utilisée comme base
+			--   de calcul pour la quasi-totalité des autres mesures.
+			-- Colonnes utilisées :
+			--   Fait_Historique des ventes[Chiffre d'affaires]
+			-- Précaution :
+			--   Inclut les jours fermés (Magasin ouvert = 0) où le CA = 0.
+			--   Pour un CA uniquement sur jours ouverts, utiliser avec
+			--   un filtre sur [Magasin ouvert] = 1.
+			-- =============================================
+			SUM('Fait_Historique des ventes'[Chiffre d'affaires])
+		formatString: "€"\ #,0;-"€"\ #,0;"€"\ #,0
+		displayFolder: 01 - KPI de base
+		lineageTag: baf2abe0-ba2f-47f9-8ed9-ef3d7349ded0
+
+	/// Nombre de lignes de ventes
+	measure 'Nombre de ventes' =
+			-- =============================================
+			-- MESURE : Nombre de ventes
+			-- Dossier : 01 - KPI de base
+			-- =============================================
+			-- Description :
+			--   Compte le nombre total de lignes dans la table de faits.
+			--   Correspond au nombre de combinaisons Magasin x Jour.
+			--   Attention : ce n'est PAS le nombre de transactions clients,
+			--   mais le nombre d'enregistrements journaliers par magasin.
+			-- =============================================
+			COUNTROWS('Fait_Historique des ventes')
+		formatString: #,0
+		displayFolder: 01 - KPI de base
+		lineageTag: 05f9b1cd-231d-4a5c-89c3-2aae982a60c5
+
+	/// Nombre total de clients
+	measure 'Passage en Caisse' =
+			-- =============================================
+			-- MESURE : Clients Total
+			-- Dossier : 01 - KPI de base
+			-- =============================================
+			-- Description :
+			--   Additionne le nombre de clients sur toutes les lignes.
+			--   Représente le trafic client total sur la période.
+			-- Colonnes utilisées :
+			--   Fait_Historique des ventes[Nombre de clients]
+			-- =============================================
+			SUM('Fait_Historique des ventes'[Nombre de clients])
+		formatString: #,0
+		displayFolder: 01 - KPI de base
+		lineageTag: aeb4d274-6539-44dd-a00c-80e7049bcfc9
+
+	/// CA moyen par jour d'ouverture
+	measure 'CA Moyen par Jour' =
+			-- =============================================
+			-- MESURE : CA Moyen par Jour
+			-- Dossier : 01 - KPI de base
+			-- =============================================
+			-- Description :
+			--   CA total divisé par le nombre de jours ouverts.
+			--   Indique la performance journalière moyenne d'un magasin.
+			--   Permet de comparer des périodes de longueurs différentes.
+			-- Formule :
+			--   Numérateur  : CA Total
+			--   Dénominateur : nombre de lignes avec Magasin ouvert = 1
+			-- =============================================
+			DIVIDE(
+			    [CA Total],
+			    COUNTROWS(FILTER('Fait_Historique des ventes', 'Fait_Historique des ventes'[Magasin ouvert] = 1))
+			)
+		formatString: "€"\ #,0.0;-"€"\ #,0.0;"€"\ #,0.0
+		displayFolder: 01 - KPI de base
+		lineageTag: 38c26332-a6ad-416b-baf1-7edbd8cb9972
+
+	/// Nombre moyen de clients par jour d'ouverture
+	measure 'Clients Moyens par Jour' =
+			-- =============================================
+			-- MESURE : Clients Moyens par Jour
+			-- Dossier : 01 - KPI de base
+			-- =============================================
+			-- Description :
+			--   Nombre moyen de clients par jour d'ouverture.
+			--   Mesure le trafic client journalier moyen.
+			--   Complémentaire au CA Moyen par Jour pour distinguer
+			--   un CA élevé dû au volume (trafic) vs. au panier.
+			-- =============================================
+			DIVIDE(
+			    [Passage en Caisse],
+			    COUNTROWS(FILTER('Fait_Historique des ventes', 'Fait_Historique des ventes'[Magasin ouvert] = 1))
+			)
+		formatString: #,0
+		displayFolder: 01 - KPI de base
+		lineageTag: 60807ea3-9397-4c5b-b3b9-e29e06c064b5
+
+	/// Panier moyen
+	measure 'CA par Client' =
+			-- =============================================
+			-- MESURE : CA par Client
+			-- Dossier : 01 - KPI de base
+			-- =============================================
+			-- Description :
+			--   CA total divisé par le nombre total de clients.
+			--   Représente le panier moyen par visite.
+			--   Indicateur clé pour évaluer la valeur par transaction.
+			-- Interprétation :
+			--   Une hausse peut signifier une montée en gamme
+			--   ou une baisse du trafic (moins de clients mais plus dépensiers).
+			-- =============================================
+			DIVIDE([CA Total], [Passage en Caisse])
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 01 - KPI de base
+		lineageTag: ba3d35aa-fdce-448c-8968-9b5acc2c9c9b
+
+	/// Nombre de jours d'ouverture
+	measure 'Jours Ouverts' =
+			-- =============================================
+			-- MESURE : Jours Ouverts
+			-- Dossier : 01 - KPI de base
+			-- =============================================
+			-- Description :
+			--   Compte le nombre de lignes où le magasin était ouvert.
+			--   Sert de dénominateur pour tous les calculs de moyennes
+			--   journalières (CA Moyen par Jour, Clients Moyens par Jour).
+			-- Colonnes utilisées :
+			--   Fait_Historique des ventes[Magasin ouvert] = 1
+			-- =============================================
+			CALCULATE(
+			    COUNTROWS('Fait_Historique des ventes'),
+			    'Fait_Historique des ventes'[Magasin ouvert] = 1
+			)
+		formatString: #,0
+		displayFolder: 01 - KPI de base
+		lineageTag: ea5627ac-439a-4746-9e46-ecfdf6773678
+
+	/// CA de la même période l'année précédente
+	measure 'CA Année Précédente' = CALCULATE([CA Total], SAMEPERIODLASTYEAR('Dim_Calendrier'[Date]))
+		formatString: #,0.0\ "€";-#,0.0\ "€";#,0.0\ "€"
+		displayFolder: 02 - Performance temporelle
+		lineageTag: 25d39b81-87d9-416c-a317-429f8874d273
+
+	/// Évolution du CA vs année précédente
+	measure 'Croissance CA YoY %' = DIVIDE([CA Total] - [CA Année Précédente], [CA Année Précédente])
+		displayFolder: 02 - Performance temporelle
+		lineageTag: 054bff51-8229-4eec-a302-5ee693613fd8
+
+		formatStringDefinition = "▲+0.00 %;▼-0.00 %;0.00 %"
+
+	/// CA cumulé depuis le début de l'année
+	measure 'CA Cumul Année (YTD)' = TOTALYTD([CA Total], 'Dim_Calendrier'[Date])
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 02 - Performance temporelle
+		lineageTag: 1e3e8fcc-b564-4d85-84bc-3021a6791143
+
+	/// CA cumulé depuis le début du trimestre
+	measure 'CA Cumul Trimestre (QTD)' = TOTALQTD([CA Total], 'Dim_Calendrier'[Date])
+		formatString: #,0 €
+		displayFolder: 02 - Performance temporelle
+		lineageTag: 90b7967f-af8a-42e9-8cb7-3fb61abdda8f
+
+	/// CA cumulé depuis le début du mois
+	measure 'CA Cumul Mois (MTD)' = TOTALMTD([CA Total], 'Dim_Calendrier'[Date])
+		formatString: #,0 €
+		displayFolder: 02 - Performance temporelle
+		lineageTag: d53a04d3-e2a0-4c7c-9974-9a5851bb6fcb
+
+	/// CA du mois précédent
+	measure 'CA Mois Précédent' = CALCULATE([CA Total], PREVIOUSMONTH('Dim_Calendrier'[Date]))
+		formatString: #,0.00\ "€";-#,0.00\ "€";#,0.00\ "€"
+		displayFolder: 02 - Performance temporelle
+		lineageTag: e7f8614a-0057-4c39-a692-773b0ca58196
+
+	/// Évolution du CA vs mois précédent
+	measure 'Croissance CA MoM %' = DIVIDE([CA Total] - [CA Mois Précédent], [CA Mois Précédent])
+		formatString: 0\ %;-0\ %;0\ %
+		displayFolder: 02 - Performance temporelle
+		lineageTag: dead4f6d-21e8-413b-9a72-b8cd73c21519
+
+	/// Moyenne mobile du CA sur les 3 derniers mois
+	measure 'CA Quotidien Moyen 14j' =
+			
+			VAR DateCourante = MAX ( Dim_Calendrier[Date] )
+			RETURN
+			CALCULATE (
+			    AVERAGEX ( VALUES ( Dim_Calendrier[Date] ), [CA Total] ),
+			    ALL ( Dim_Calendrier ),
+			    Dim_Calendrier[Date] > DateCourante - 14,
+			    Dim_Calendrier[Date] <= DateCourante
+			)
+		formatString: #,0 €
+		displayFolder: 02 - Performance temporelle
+		lineageTag: ba6eb263-92e1-4492-b813-feb66a5f388c
+
+	/// CA réalisé lors des jours de promotion
+	measure 'CA avec Promo' = CALCULATE([CA Total], 'Fait_Historique des ventes'[Promotion active] = 1)
+		formatString: #,0.0\ "€";-#,0.0\ "€";#,0.0\ "€"
+		displayFolder: 03 - Promotions
+		lineageTag: 56713439-2793-47e1-a90f-b68c977cffec
+
+	/// CA réalisé hors promotion
+	measure 'CA sans Promo' = CALCULATE([CA Total], 'Fait_Historique des ventes'[Promotion active] = 0)
+		formatString: #,0.0\ "€";-#,0.0\ "€";#,0.0\ "€"
+		displayFolder: 03 - Promotions
+		lineageTag: c016a771-ae6c-4709-988f-d48d1e0523bc
+
+	/// Clients lors des jours de promotion
+	measure 'Clients avec Promo' = CALCULATE([Passage en Caisse], 'Fait_Historique des ventes'[Promotion active] = 1)
+		formatString: #,0
+		displayFolder: 03 - Promotions
+		lineageTag: 2f6480c8-1210-4d8a-8281-b55ffd1ed9c6
+
+	/// Gain de CA moyen journalier avec promo vs sans promo
+	measure 'Uplift CA Promo %' =
+			
+			VAR CA_Promo =
+			    CALCULATE ( [CA Total],
+			        'Fait_Historique des ventes'[Promotion active] = 1,
+			        Dim_Calendrier[Jour Semaine No] <= 5 )
+			VAR Jours_Promo =
+			    CALCULATE ( [Jours Ouverts],
+			        'Fait_Historique des ventes'[Promotion active] = 1,
+			        Dim_Calendrier[Jour Semaine No] <= 5 )
+			VAR CA_Sans =
+			    CALCULATE ( [CA Total],
+			        'Fait_Historique des ventes'[Promotion active] = 0,
+			        Dim_Calendrier[Jour Semaine No] <= 5 )
+			VAR Jours_Sans =
+			    CALCULATE ( [Jours Ouverts],
+			        'Fait_Historique des ventes'[Promotion active] = 0,
+			        Dim_Calendrier[Jour Semaine No] <= 5 )
+			VAR Moy_Promo = DIVIDE ( CA_Promo, Jours_Promo )
+			VAR Moy_Sans = DIVIDE ( CA_Sans, Jours_Sans )
+			RETURN
+			    DIVIDE ( Moy_Promo - Moy_Sans, Moy_Sans )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 03 - Promotions
+		lineageTag: 952518a9-6ffb-46ce-b6dc-9809f97363bf
+
+	/// CA des magasins participant à la Promo2
+	measure 'CA Promo récurrente' = CALCULATE([CA Total], 'Dim_Magasin'[Promo2 Active] = 1)
+		formatString: #,0.0\ "€";-#,0.0\ "€";#,0.0\ "€"
+		displayFolder: 03 - Promotions
+		lineageTag: c1f9a4dc-3b62-480e-b22e-2304cc37a6c1
+
+	/// Nombre de magasins distincts ayant vendu
+	measure 'Nombre de Magasins Actifs' = DISTINCTCOUNT('Fait_Historique des ventes'[ID Magasin])
+		formatString: #,0.0
+		displayFolder: 04 - Magasins
+		lineageTag: 72e705b4-5dc4-49ca-9896-457fb3af1a24
+
+	/// CA moyen par magasin
+	measure 'CA Moyen par Magasin' = DIVIDE([CA Total], DISTINCTCOUNT('Dim_Magasin'[ID Magasin]))
+		displayFolder: 04 - Magasins
+		lineageTag: a152ee66-2e5e-4deb-b63c-2928acef98f7
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Clients moyens par magasin
+	measure 'Clients Moyens par Magasin' = DIVIDE([Passage en Caisse], [Nombre de Magasins Actifs])
+		formatString: #,0
+		displayFolder: 04 - Magasins
+		lineageTag: ff4df461-9840-46b8-a81d-95fead2fb851
+
+	/// Taux de jours d'ouverture sur la période
+	measure 'Taux Ouverture %' = DIVIDE([Jours Ouverts], COUNTROWS('Fait_Historique des ventes'))
+		formatString: 0.0%
+		displayFolder: 04 - Magasins
+		lineageTag: f600f8c4-4e17-46db-9edf-0fdc63ec079d
+
+	/// CA réalisé le week-end
+	measure 'CA Week-end' = CALCULATE([CA Total], 'Dim_Calendrier'[Est Weekend] = TRUE())
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: 8125e926-af34-4a1d-818d-ccc25b4f095f
+
+	/// Part du CA réalisé le week-end
+	measure 'Part CA Week-end %' = DIVIDE([CA Week-end], [CA Total])
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: 67d9b3f5-ca65-459f-88b9-62d9d84dee3f
+
+	/// Classement du magasin par CA décroissant
+	measure 'Rang CA Magasin' = RANKX(ALL('Dim_Magasin'[ID Magasin]), [CA Total],, DESC, DENSE)
+		formatString: #,0
+		displayFolder: 06 - Mesures avancées
+		lineageTag: 87c7ffd2-273d-4779-9cf6-a6729d8e9999
+
+	measure 'Croissance CA' =
+			
+			VAR growth = [Croissance CA YoY %]
+			VAR arrow =
+			    IF(growth < 0, "▼ ", "▲ ")
+			RETURN
+			arrow & FORMAT(growth, "0.0%") & " vs N-1"
+		displayFolder: 01 - KPI de base
+		lineageTag: 373f3017-e0db-4923-9940-b10ee717d018
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Couleur Croissance' =
+			
+			IF(
+			    [Croissance CA YoY %] < 0,
+			    "#D64545",   -- rouge
+			    "#2E8B57"    -- vert
+			)
+		displayFolder: 01 - KPI de base
+		lineageTag: 4b2f10f7-902c-4bb8-8066-db8ba9f08120
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Clients N-1' =
+			
+			CALCULATE(
+			    [Passage en Caisse],
+			    SAMEPERIODLASTYEAR(Dim_Calendrier[Date]))
+		displayFolder: 01 - KPI de base
+		lineageTag: 9eeea1d0-1d7b-4313-810c-27bf84a014f6
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Croissance Clients %' =
+			
+			DIVIDE(
+			    [Passage en Caisse]-[Clients N-1],
+			    [Clients N-1])
+		displayFolder: 01 - KPI de base
+		lineageTag: 65786e61-0a3e-4d4a-b379-209b1c3fb90c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Croissance_Clients =
+			
+			VAR growth = [Croissance Clients %]
+			VAR arrow =
+			    IF(growth < 0, "🔴 ", "🟢 ")
+			RETURN
+			arrow & FORMAT(growth, "0.0%") & " vs N-1"
+		displayFolder: 01 - KPI de base
+		lineageTag: 4c4becb7-dc30-4a2f-bd33-4226e12f496f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Couleur Clients' =
+			
+			IF(
+			    [Croissance Clients %] < 0,
+			    "#D64545",
+			    "#2E8B57"
+			)
+		displayFolder: 01 - KPI de base
+		lineageTag: b906fc05-d51b-4310-9fed-571a66e27029
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Croissance Clients' =
+			
+			VAR g = [Croissance Clients %]
+			VAR arrow = IF(g < 0, "▼ ", "▲ ")
+			RETURN
+			arrow & FORMAT(g, "+0.0%;-0.0%") & " vs N-1"
+		displayFolder: 01 - KPI de base
+		lineageTag: 3495291c-7455-4d8c-b10e-7d7b1cd404a8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Insight = ```
+			VAR Mois = SELECTEDVALUE('Dim_Calendrier'[Mois])
+			VAR Croissance = [Croissance CA YoY %]
+			VAR CroissanceJour = [Croissance CA Constant %] 
+			
+			RETURN
+			SWITCH(
+			    TRUE(),
+			
+			    -- Cas spécifique : CA total en baisse MAIS performance journalière en hausse
+			    -- => la baisse vient du nombre de jours ouverts, pas de la performance commerciale
+			    Croissance < 0 && CroissanceJour > 0,
+			    "📉 CA en baisse mais " & FORMAT(CroissanceJour, "+0.0%") & " par jour ouvert" & UNICHAR(10) & "Moins de jours ouverts, pas une perte commerciale",
+			
+			    -- Cas : CA total ET performance journalière tous les deux en baisse
+			    -- => véritable dégradient commercial
+			    Croissance < 0 && CroissanceJour <= 0,
+			    "⚠️ Baisse commerciale réelle" & UNICHAR(10) & "CA et performance journalière en recul",
+			
+			    -- Saisonnalité : juillet et août traditionnellement faibles
+			    Mois IN {"juillet", "août"},
+			    "⚠️ Baisse saisonnière du CA" & UNICHAR(10),
+			
+			    -- Saisonnalité : novembre et décembre traditionnellement forts
+			    Mois IN {"novembre", "décembre"},
+			    "📈 Forte activité commerciale" & UNICHAR(10),
+			
+			    -- Croissance positive standard
+			    Croissance > 0,
+			    "📈 Croissance positive du CA" & UNICHAR(10),
+			
+			    -- Défaut
+			    "📉 Performance en baisse" & UNICHAR(10)
+			)
+			```
+		displayFolder: 07 - Couleurs dynamiques
+		lineageTag: 658d32c6-f166-49a6-b1ac-3942834bda53
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Insight Magasin' = ```
+			
+			VAR TypeMagasin = SELECTEDVALUE(Dim_Magasin[Type de magasin], "Global")
+			
+			RETURN
+			SWITCH(
+			    TRUE(),
+			
+			    TypeMagasin = "B",
+			    "🏬 Type B : meilleure performance (CA élevé)" 
+			    & UNICHAR(10) & UNICHAR(10) &
+			    "👉 Reco : prioriser ce format et reproduire ses leviers",
+			
+			    TypeMagasin = "A",
+			    "🏪 Type A : performance intermédiaire" 
+			    & UNICHAR(10) & UNICHAR(10) &
+			    "👉 Reco : optimiser assortiment et trafic",
+			
+			    TypeMagasin = "C",
+			    "🏪 Type C : performance similaire à A" 
+			    & UNICHAR(10) & UNICHAR(10) &
+			    "👉 Reco : activer promotions ciblées",
+			
+			    TypeMagasin = "D",
+			    "🏬 Type D : performance la plus faible" 
+			    & UNICHAR(10) & UNICHAR(10) &
+			    "👉 Reco : rationaliser les coûts ou revoir le positionnement",
+			
+			    "📊 Vue globale : le type B surperforme nettement les autres formats"
+			)
+			```
+		displayFolder: 01 - KPI de base
+		lineageTag: d3e77746-e139-4be1-b72f-e7e0162e03d9
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Titre_graphique_cascade = "Contribution de chaque mois à la variation du CA (M€) pour l'année " & SELECTEDVALUE(Dim_Calendrier[Annee])
+		displayFolder: 01 - KPI de base
+		lineageTag: 6cfc0a48-2b90-43ff-b422-b1dd3c7ede0b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Titre Week-end' =
+			
+			VAR Selection =
+			    IF (
+			        ISFILTERED ( Dim_Magasin[Type de magasin] ),
+			        "magasins de type " & CONCATENATEX ( VALUES ( Dim_Magasin[Type de magasin] ), Dim_Magasin[Type de magasin], ", " ),
+			        "tous types de magasins"
+			    )
+			RETURN
+			    "Analyse du week-end en " & SELECTEDVALUE ( Dim_Calendrier[Annee] ) & " — " & Selection
+		displayFolder: 01 - KPI de base
+		lineageTag: 184e84f7-9003-43ff-99ab-37f8aa98024c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Titre_graphique_tendance = "CA quotidien moyen — moyenne mobile pour l'année " & SELECTEDVALUE(Dim_Calendrier[Annee])
+		displayFolder: 01 - KPI de base
+		lineageTag: 201de588-2ae9-48d9-bdd3-48c2c58d64dd
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone CA Total' =
+			
+			imgBadgeEmbeddedAllIcons("banknote", "#FFFFFF", "#E2001A", 60, 12, 2)
+		displayFolder: Icone
+		lineageTag: 0c82f39a-7178-46e5-a1cc-17c7d7d4584a
+		dataCategory: ImageUrl
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone Croissance Negatif' =
+			
+			imgBadgeEmbeddedAllIcons("trending-down", "#FFFFFF", "#FF9900", 60, 12, 2)
+		displayFolder: Icone
+		lineageTag: 2eef1229-0788-44f3-9569-bd5dd0af676b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone Clients' =
+			
+			imgBadgeEmbeddedAllIcons("users", "#FFFFFF", "#005596", 60, 12, 2)
+		displayFolder: Icone
+		lineageTag: b3f37de7-91e8-47a0-8c21-abb62de9ea61
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone CA Avec Promo' =
+			
+			imgBadgeEmbeddedAllIcons("badge-percent", "#FFFFFF", "#E2001A", 60, 12, 2)
+		displayFolder: Icone
+		lineageTag: 1b6485a3-3622-47e6-87da-cfe45c927c6d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone CA Sans Promo' =
+			
+			imgBadgeEmbeddedAllIcons("store", "#FFFFFF", "#666666", 60, 12, 2)
+		displayFolder: Icone
+		lineageTag: 09459c9b-5a16-4f5a-b430-2a12571ac25d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone Efficacite Promo' =
+			
+			imgBadgeEmbeddedAllIcons("zap", "#FFFFFF", "#FFB800", 60, 12, 2)
+		displayFolder: Icone
+		lineageTag: d3b8b501-562f-4ed6-a51e-bbc6b83e27b4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone Clients Promo' =
+			
+			imgBadgeEmbeddedAllIcons("users", "#FFFFFF", "#0078D4", 60, 12, 2)
+		displayFolder: Icone
+		lineageTag: 40a20145-e4e8-4985-b3e3-6481d247bd29
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Taux de jours en Promo %' = ```
+			
+			// On calcule d'abord le nombre de jours avec promo 
+			DIVIDE (
+			    CALCULATE ( [Jours Ouverts], 'Fait_Historique des ventes'[Promotion active] = 1 ),
+			    CALCULATE ( [Jours Ouverts], Dim_Calendrier[Jour Semaine No] <= 5 )
+			)
+			```
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
+		displayFolder: 03 - Promotions
+		lineageTag: a688dcb2-a223-4351-9f85-7a34b41ab97c
+
+	measure 'Moyenne CA Réseau' = ```
+			
+			// Calcule la moyenne globale de CA peu importe le type de magasin
+			CALCULATE(
+			    [CA Moyen par Jour], 
+			    ALLSELECTED('Dim_Magasin'[Type de magasin])
+			)
+			```
+		displayFolder: 03 - Promotions
+		lineageTag: 9a1baca1-f8ff-45d2-b26f-e73eb0d7a6cb
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Titre Dynamique Corrélation' =
+			
+			VAR Annee = SELECTEDVALUE ( 'Dim_Calendrier'[Annee], "Toutes années" )
+			VAR TypeMag = SELECTEDVALUE ( 'Dim_Magasin'[Type de magasin], "Tous types" )
+			RETURN
+			    "Deux modèles dans un même réseau : fréquentation contre panier moyen | "
+			        & Annee & " · " & TypeMag
+		displayFolder: Icone
+		lineageTag: c35cd42b-428c-467e-87a4-5a9ee82f8879
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Titre Dynamique Graphiques' = ```
+			
+			VAR Annee = SELECTEDVALUE('Dim_Calendrier'[Annee], "Toutes les années")
+			VAR Trimestre = SELECTEDVALUE('Dim_Calendrier'[Trimestre], "Tous les trimestres")
+			VAR TypeMag = SELECTEDVALUE('Dim_Magasin'[Type de magasin], "Tous types")
+			
+			RETURN
+			"Quel format profite le plus des promotions ? " & 
+			IF(ISFILTERED('Dim_Calendrier'[Mois Abrege]), "Mois", " | " & "Période") & 
+			" | " & Annee & " " & 
+			" | Magasins : " & TypeMag
+			```
+		displayFolder: Icone
+		lineageTag: c8a0c847-c447-4087-be84-0f461bcd88db
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone Promo Recurrente' =
+			
+			imgBadgeEmbeddedAllIcons("refresh-cw", "#FFFFFF", "#8E44AD", 60, 12, 2)
+		displayFolder: Icone
+		lineageTag: a212d1ad-8e08-404b-9b3d-0b0841485c3b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'CA Evolution Infobulle' =
+			
+			VAR TypeSelectionne = SELECTEDVALUE('Dim_Magasin'[Type de magasin])
+			RETURN
+			CALCULATE(
+			    [CA Moyen par Jour],
+			    ALL('Dim_Calendrier'), -- On ignore le mois survolé
+			    ALLSELECTED(),         -- On ignore les filtres de mesures du nuage de points
+			    'Dim_Magasin'[Type de magasin] = TypeSelectionne -- On réinjecte le magasin
+			)
+		displayFolder: Icone
+		lineageTag: 5a0e2e21-62d9-40e6-9969-856dafb32eb5
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Panier Moyen' =
+			-- =============================================
+			-- MESURE : Panier Moyen
+			-- Dossier : 01 - KPI de base
+			-- =============================================
+			-- Description :
+			--   Alias explicit de CA par Client.
+			--   CA total divisé par le nombre total de clients.
+			--   Indique combien chaque client dépense en moyenne par visite.
+			--   Utilisé dans les visuels où le libellé "Panier Moyen" est
+			--   plus explicite pour un public non technique.
+			-- =============================================
+			DIVIDE([CA Total], [Passage en Caisse])
+		formatString: #,0.00 €
+		displayFolder: 01 - KPI de base
+		lineageTag: 9aa030b0-c369-4d7e-9d57-3ca80238d661
+
+	measure 'Variation CA' =
+			
+			[CA Total]-[CA Année Précédente]
+		displayFolder: 01 - KPI de base
+		lineageTag: be0e9a78-3a57-4922-8d47-1cb81c1c5350
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone Calendrier' = ```
+			
+			IF(
+			    ISINSCOPE('Dim_Calendrier'[Annee Mois]), 
+			    imgBadgeEmbeddedAllIcons("calendar", "#E2001A", "", 24, 0, 2),
+			    BLANK()
+			)
+			```
+		displayFolder: Icone
+		lineageTag: f01d62d7-b77b-4a54-9f18-9164e5b210f3
+		dataCategory: ImageUrl
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Icone Menu Temporelle' =
+			
+			imgBadgeEmbeddedAllIcons("calendar-days", "#FFFFFF", "", 50, 0, 2)
+		displayFolder: Icone
+		lineageTag: 0e07ae4d-cbb3-4e84-a561-2a4a06d871d4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'CA par Jour Ouvert' =
+			-- =============================================
+			-- MESURE : CA par Jour Ouvert
+			-- =============================================
+			-- Description :
+			--   CA réalisé divisé par le nombre de jours d'ouverture.
+			--   Mesure la performance réelle indépendamment du nombre
+			--   de jours ouverts. Permet de comparer des années avec
+			--   des périodes ou des volumetries de jours différentes.
+			--   En 2014 : +3,1% vs 2013 malgré un CA total en baisse.
+			-- =============================================
+			DIVIDE(
+			    CALCULATE([CA Total], 'Fait_Historique des ventes'[Magasin ouvert] = 1),
+			    CALCULATE(COUNTROWS('Fait_Historique des ventes'), 'Fait_Historique des ventes'[Magasin ouvert] = 1)
+			)
+		formatString: #,0 €
+		displayFolder: 08 - Perimetre constant
+		lineageTag: 40220ece-b09e-4044-80be-c4865984563f
+
+	measure 'CA par Jour Ouvert N-1' =
+			-- =============================================
+			-- MESURE : CA par Jour Ouvert N-1
+			-- =============================================
+			-- Description :
+			--   CA par jour ouvert de la même période l'année précédente.
+			--   Sert de base de comparaison pour la croissance
+			--   à périmètre constant.
+			-- =============================================
+			CALCULATE(
+			    [CA par Jour Ouvert],
+			    SAMEPERIODLASTYEAR('Dim_Calendrier'[Date])
+			)
+		formatString: #,0 €
+		displayFolder: 08 - Perimetre constant
+		lineageTag: 6f2a3db2-79c4-46ea-98f3-69ebbcf9687a
+
+	measure 'Croissance CA Constant %' =
+			-- =============================================
+			-- MESURE : Croissance CA Perimetre Constant %
+			-- =============================================
+			-- Description :
+			--   Évolution du CA PAR JOUR OUVERT vs année précédente.
+			--   Neutralise l'effet du nombre de jours ouverts.
+			--   Si positif alors que le CA total est négatif : la baisse
+			--   globale vient d'une réduction des jours ouverts,
+			--   pas d'une perte de performance commerciale.
+			--   Ex. 2014 : CA total -5,3% MAIS performance +3,1%
+			--   => les magasins vendent mieux, il y a juste moins de jours.
+			-- =============================================
+			DIVIDE(
+			    [CA par Jour Ouvert] - [CA par Jour Ouvert N-1],
+			    [CA par Jour Ouvert N-1]
+			)
+		displayFolder: 08 - Perimetre constant
+		lineageTag: ce493368-5252-4d8c-b3ca-93bf59908fec
+
+		formatStringDefinition = "▲+0.0%;▼-0.0%;0.0%"
+
+	measure 'Nombre de magasin' = DISTINCTCOUNT(Dim_Magasin[ID Magasin])
+		displayFolder: 04 - Magasins
+		lineageTag: 022a7d3d-963c-4c48-bcf8-9f8b1e842b86
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Variation CA vs N-1' =
+			
+			VAR CA_N = [CA Total]
+			VAR CA_N1 = [CA Année Précédente]
+			RETURN
+			    IF (
+			        NOT ISBLANK ( CA_N ) && NOT ISBLANK ( CA_N1 ),
+			        CA_N - CA_N1
+			    )
+		displayFolder: 02 - Performance temporelle
+		lineageTag: ef3675b6-56a6-4e58-978c-02aa4f7c6581
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Nombre de samedis effectivement couverts par les donnees de ventes. Compte les dates de la table de faits, pas celles du calendrier : Dim_Calendrier va jusqu'au 31/12/2015 alors que les ventes s'arretent au 31/07/2015.
+	measure 'Nombre de Samedis' =
+			-- =============================================
+			-- MESURE : Nombre de Samedis
+			-- Dossier : 05 - Analyse temporelle
+			-- =============================================
+			-- Description :
+			--   Compte les samedis presents dans la table de faits.
+			-- Pourquoi la table de faits et non le calendrier :
+			--   Dim_Calendrier couvre 1095 dates (2013-2015 complet) alors que
+			--   les ventes s'arretent au 31/07/2015, soit 942 dates. Compter les
+			--   156 samedis du calendrier au lieu des 134 renseignes diluerait
+			--   toute moyenne par samedi de 16 pour cent.
+			-- =============================================
+			CALCULATE (
+			    DISTINCTCOUNT ( 'Fait_Historique des ventes'[Date] ),
+			    'Dim_Calendrier'[Jour Semaine No] = 6
+			)
+		formatString: #,0
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: 68b6d0b7-f15a-466a-8295-91e7ec1980ba
+
+	/// Chiffre d'affaires realise les samedis.
+	measure 'CA Samedi' =
+			-- =============================================
+			-- MESURE : CA Samedi
+			-- Dossier : 05 - Analyse temporelle
+			-- =============================================
+			-- Description :
+			--   CA Total restreint aux samedis.
+			-- =============================================
+			CALCULATE ( [CA Total], 'Dim_Calendrier'[Jour Semaine No] = 6 )
+		formatString: #,0.0\ "€";-#,0.0\ "€";#,0.0\ "€"
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: 5e186ed7-cedf-41e1-83c0-d20336e51e0a
+
+	/// CA reseau moyen genere un samedi. Denominateur = nombre de samedis calendaires, tous magasins confondus.
+	measure 'CA Moyen par Samedi' =
+			-- =============================================
+			-- MESURE : CA Moyen par Samedi
+			-- Dossier : 05 - Analyse temporelle
+			-- =============================================
+			-- Description :
+			--   CA reseau moyen d'un samedi = CA Samedi / Nombre de Samedis.
+			-- Attention :
+			--   Base jour calendaire reseau, differente de [CA Moyen par Jour]
+			--   qui est une moyenne par couple magasin-jour ouvert.
+			-- =============================================
+			DIVIDE ( [CA Samedi], [Nombre de Samedis] )
+		formatString: #,0.0\ "€";-#,0.0\ "€";#,0.0\ "€"
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: e406c73a-73a2-479c-b156-93776dc340d1
+
+	/// Performance d'un samedi rapportee a celle d'un jour moyen, base 100. Calcule sur le CA par magasin-jour ouvert, ce qui neutralise le nombre de magasins ouverts. 100 = samedi dans la moyenne, 120 = samedi 20 % au-dessus.
+	measure 'Indice Samedi' = ```
+			-- =============================================
+			-- MESURE : Indice Samedi
+			-- Dossier : 05 - Analyse temporelle
+			-- =============================================
+			-- Description :
+			--   Rapport entre le CA par magasin-jour ouvert du samedi et celui
+			--   d'un jour moyen de la periode, en base 100.
+			-- Pourquoi le CA par magasin-jour et non par jour calendaire :
+			--   le nombre de magasins ouverts varie fortement selon le jour
+			--   de la semaine (dimanche quasi ferme). Rapporter au magasin-jour
+			--   isole la performance et neutralise cet effet de composition.
+			-- Lecture :
+			--   100 = samedi conforme a la moyenne
+			--   > 100 = samedi surperformant
+			-- ============================================= 
+			DIVIDE ( [CA Moyen par Samedi], [CA Moyen par Jour Ouvré] )
+			```
+		formatString: 0\ %;-0\ %;0\ %
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: 990bb60b-e37d-4db4-9fe0-f25f2b358914
+
+	/// CA reseau moyen d'un jour ouvre (lundi a vendredi). Denominateur corrige : compte les dates presentes dans les ventes, et non les dates du calendrier, qui court jusqu'au 31/12/2015 sans donnees apres le 31/07/2015.
+	measure 'CA Moyen par Jour Ouvré' =
+			-- =============================================
+			-- MESURE : CA Moyen par Jour Ouvre
+			-- Dossier : 05 - Analyse temporelle
+			-- =============================================
+			-- Correction :
+			--   Le denominateur comptait les dates de Dim_Calendrier, qui
+			--   contient 109 jours ouvres sans aucune vente (aout a decembre
+			--   2015). La moyenne etait sous-estimee de 16 pour cent.
+			-- =============================================
+			DIVIDE (
+			    CALCULATE ( [CA Total], 'Dim_Calendrier'[Jour Semaine No] <= 5 ),
+			    CALCULATE (
+			        DISTINCTCOUNT ( 'Fait_Historique des ventes'[Date] ),
+			        'Dim_Calendrier'[Jour Semaine No] <= 5
+			    )
+			)
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: 080f74e4-89c7-4829-851f-91da47ce0bc0
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Nombre de jours ouvres calendaires (lundi a vendredi) sans promotion active. Meme base que [CA Moyen par Jour Ouvre] : jour calendaire reseau.
+	measure 'Jours Ouvrés hors Promo' =
+			-- =============================================
+			-- MESURE : Jours Ouvres hors Promo
+			-- Dossier : 05 - Analyse temporelle
+			-- =============================================
+			-- Description :
+			--   Compte les dates distinctes du lundi au vendredi sans promotion.
+			--   Verifie : la promotion est activee de facon uniforme sur tout le
+			--   reseau un jour donne (aucune date mixte sur les 942 dates).
+			--   Le comptage par date est donc licite.
+			-- =============================================
+			CALCULATE (
+			    DISTINCTCOUNT ( 'Fait_Historique des ventes'[Date] ),
+			    'Dim_Calendrier'[Jour Semaine No] <= 5,
+			    'Fait_Historique des ventes'[Promotion active] = 0
+			)
+		formatString: #,0
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: 8b0f4403-1a93-491b-8380-d83a77f7ab22
+
+	/// CA reseau moyen d'un jour ouvre (lundi a vendredi) sans promotion. Reference non biaisee pour comparer le samedi, qui n'est jamais en promotion.
+	measure 'CA Moyen par Jour Ouvré hors Promo' =
+			-- =============================================
+			-- MESURE : CA Moyen par Jour Ouvre hors Promo
+			-- Dossier : 05 - Analyse temporelle
+			-- =============================================
+			-- Description :
+			--   Pendant de [CA Moyen par Jour Ouvre], restreint aux jours
+			--   sans promotion.
+			-- Pourquoi :
+			--   La promotion n'est jamais activee le samedi, alors qu'elle
+			--   couvre 360 des 942 dates de la periode, toutes en semaine.
+			--   Comparer un samedi a une moyenne lundi-vendredi incluant les
+			--   jours promo revient a comparer deux regimes commerciaux.
+			-- =============================================
+			DIVIDE (
+			    CALCULATE (
+			        [CA Total],
+			        'Dim_Calendrier'[Jour Semaine No] <= 5,
+			        'Fait_Historique des ventes'[Promotion active] = 0
+			    ),
+			    [Jours Ouvrés hors Promo]
+			)
+		formatString: #,0.0\ "€";-#,0.0\ "€";#,0.0\ "€"
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: fa41a74b-f25f-4198-8879-dc46bd39c56c
+
+	/// Performance d'un samedi rapportee a celle d'un jour ouvre SANS promotion. Meme construction que [Indice Samedi], mais avec une reference debarrassee de l'effet promotion.
+	measure 'Indice Samedi hors Promo' =
+			-- =============================================
+			-- MESURE : Indice Samedi hors Promo
+			-- Dossier : 05 - Analyse temporelle
+			-- =============================================
+			-- Description :
+			--   [CA Moyen par Samedi] rapporte a [CA Moyen par Jour Ouvre hors Promo].
+			--   Le numerateur n'a pas besoin d'etre corrige : aucun samedi de la
+			--   periode n'est en promotion.
+			-- Lecture :
+			--   100 % = samedi conforme a un jour ouvre hors promo
+			-- =============================================
+			DIVIDE ( [CA Moyen par Samedi], [CA Moyen par Jour Ouvré hors Promo] )
+		formatString: 0\ %;-0\ %;0\ %
+		displayFolder: 05 - Analyse temporelle
+		lineageTag: f7556a4b-b6dc-490c-97fa-b572353551d2
+
+	measure 'Clients par Jour Ouvert' = DIVIDE ( [Passage en Caisse], [Jours Ouverts] )
+		formatString: 0
+		lineageTag: fc13c10e-92c2-4dc1-abdf-0c117f833511
+
+		annotation PBI_FormatHint = {"isDecimal":true}
+
+	measure 'Titre Dynamique Graphiques 2' = ```
+			
+			VAR Annee = SELECTEDVALUE('Dim_Calendrier'[Annee], "Toutes les années")
+			VAR Trimestre = SELECTEDVALUE('Dim_Calendrier'[Trimestre], "Tous les trimestres")
+			VAR TypeMag = SELECTEDVALUE('Dim_Magasin'[Type de magasin], "Tous types")
+			
+			RETURN
+			"Un écart stable sur les douze mois " & 
+			IF(ISFILTERED('Dim_Calendrier'[Mois Abrege]), "Mois", " | " & "Période") & 
+			" | " & Annee & " " & 
+			" | Magasins : " & TypeMag
+			```
+		displayFolder: Icone
+		lineageTag: fa6975fc-e4d9-43f4-8329-6a74168c8273
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Clients par Jour Promo' =
+			
+			DIVIDE (
+			    CALCULATE ( [Passage en Caisse],
+			        'Fait_Historique des ventes'[Promotion active] = 1,
+			        Dim_Calendrier[Jour Semaine No] <= 5 ),
+			    CALCULATE ( [Jours Ouverts],
+			        'Fait_Historique des ventes'[Promotion active] = 1,
+			        Dim_Calendrier[Jour Semaine No] <= 5 )
+			)
+		displayFolder: 03 - Promotions
+		lineageTag: 16dfc59a-21fb-487d-aca7-8fe40d43ddae
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Clients par Jour Hors Promo' =
+			
+			DIVIDE (
+			    CALCULATE ( [Passage en Caisse],
+			        'Fait_Historique des ventes'[Promotion active] = 0,
+			        Dim_Calendrier[Jour Semaine No] <= 5 ),
+			    CALCULATE ( [Jours Ouverts],
+			        'Fait_Historique des ventes'[Promotion active] = 0,
+			        Dim_Calendrier[Jour Semaine No] <= 5 )
+			)
+		displayFolder: 03 - Promotions
+		lineageTag: 1f2b1d09-3015-4787-86dc-db28e39a5a07
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Panier Moyen Promo' =
+			
+			DIVIDE (
+			    CALCULATE ( [CA Total],
+			        'Fait_Historique des ventes'[Promotion active] = 1,
+			        Dim_Calendrier[Jour Semaine No] <= 5 ),
+			    CALCULATE ( [Passage en Caisse],
+			        'Fait_Historique des ventes'[Promotion active] = 1,
+			        Dim_Calendrier[Jour Semaine No] <= 5 )
+			)
+		displayFolder: 03 - Promotions
+		lineageTag: 26050520-0b1e-4951-b35f-72d5a4a72f99
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Panier Moyen Hors Promo' =
+			
+			DIVIDE (
+			    CALCULATE ( [CA Total],
+			        'Fait_Historique des ventes'[Promotion active] = 0,
+			        Dim_Calendrier[Jour Semaine No] <= 5 ),
+			    CALCULATE ( [Passage en Caisse],
+			        'Fait_Historique des ventes'[Promotion active] = 0,
+			        Dim_Calendrier[Jour Semaine No] <= 5 )
+			)
+		displayFolder: 03 - Promotions
+		lineageTag: 81157d5a-b36b-4b8e-86ee-6390cd39f8cf
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Uplift Clients %' =
+			
+			DIVIDE (
+			    [Clients par Jour Promo] - [Clients par Jour Hors Promo],
+			    [Clients par Jour Hors Promo]
+			)
+		formatString: 0\ %;-0\ %;0\ %
+		displayFolder: 03 - Promotions
+		lineageTag: 4a72c5e1-672c-455c-b477-d74e4c2bfa7e
+
+	measure 'Uplift Panier %' =
+			
+			DIVIDE (
+			    [Panier Moyen Promo] - [Panier Moyen Hors Promo],
+			    [Panier Moyen Hors Promo]
+			)
+		formatString: 0\ %;-0\ %;0\ %
+		displayFolder: 03 - Promotions
+		lineageTag: e069c10d-81d4-4dc0-9fda-3dd91866f380
+
+	measure 'Couleur cellule' =
+			
+			VAR _item = SELECTEDVALUE ( Temps[Colonne du groupe de calcul] )
+			VAR _v = [CA Total]
+			RETURN
+			    IF (
+			        _item = "Variation annuelle %",
+			        IF ( _v >= 0, "#1B7F4B", "#C0392B" ),
+			        "#333333"
+			    )
+		displayFolder: 07 - Couleurs dynamiques
+		lineageTag: 070854e5-f102-4b22-a01a-919ab7c7dd20
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column x
+		isHidden
+		lineageTag: a60cc81c-27f7-4f17-9b71-3cff4131a9f5
+		isDefaultLabel
+		isNameInferred
+		sourceColumn: [x]
+
+	partition _Mesures = calculated
+		mode: import
+		source = ROW("x", BLANK())
+

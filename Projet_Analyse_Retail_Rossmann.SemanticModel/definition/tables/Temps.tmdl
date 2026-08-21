@@ -1,0 +1,86 @@
+table Temps
+	lineageTag: 505e0095-a129-41a1-80c2-c62f717821e8
+
+	defaultDetailRowsDefinition =
+			int n = 0;
+			foreach(var cg in Model.Tables.OfType<Temps>())
+			{
+			    Output("Groupe trouve : " + cg.Name);
+			    foreach(var ci in cg.CalculationItems)
+			    {
+			        if(ci.Name.Contains("%") || ci.Name.ToLower().Contains("pourcentage"))
+			            ci.FormatStringExpression = "\"0.0 %;-0.0 %;0.0 %\"";
+			        else
+			            ci.FormatStringExpression = "\"#,##0,, \"\"M€\"\"\"";
+			        Output("   " + ci.Name + " -> " + ci.FormatStringExpression);
+			        n++;
+			    }
+			}
+			Info(n + " element(s) formate(s). Fais Ctrl+S.");
+
+	calculationGroup
+
+		calculationItem Actuel = SELECTEDMEASURE()
+
+		calculationItem 'Cumul mois en cours (MTD)' =
+				
+				TOTALMTD(
+				    SELECTEDMEASURE(),
+				    Dim_Calendrier[Date]
+				)
+
+		calculationItem 'Cumul trimestre en cours (QTD)' =
+				
+				TOTALQTD(
+				    SELECTEDMEASURE(),
+				    Dim_Calendrier[Date]
+				)
+
+		calculationItem 'Cumul annuel' =
+				
+				TOTALYTD(
+				    SELECTEDMEASURE(),
+				    Dim_Calendrier[Date]
+				)
+
+		calculationItem N-1 =
+				
+				CALCULATE(
+				    SELECTEDMEASURE(),
+				    SAMEPERIODLASTYEAR(Dim_Calendrier[Date])
+				)
+
+		calculationItem Variation =
+				
+				DIVIDE(
+				    SELECTEDMEASURE()
+				        - CALCULATE(
+				            SELECTEDMEASURE(),
+				            SAMEPERIODLASTYEAR(Dim_Calendrier[Date])
+				        ),
+				    CALCULATE(
+				        SELECTEDMEASURE(),
+				        SAMEPERIODLASTYEAR(Dim_Calendrier[Date])
+				    )
+				)
+
+			formatStringDefinition = """▲ ""0.0%;""▼ ""0.0%;""= ""0.0%"
+
+	column 'Colonne du groupe de calcul'
+		dataType: string
+		lineageTag: bb7c29bb-90b7-4b0b-b371-a252bc26e92c
+		summarizeBy: none
+		sourceColumn: Name
+		sortByColumn: Ordinal
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ordinal
+		dataType: int64
+		formatString: 0
+		lineageTag: 348a6fc2-4363-4f2f-b431-8fc813799dae
+		summarizeBy: sum
+		sourceColumn: Ordinal
+
+		annotation SummarizationSetBy = Automatic
+

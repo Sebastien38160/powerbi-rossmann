@@ -1,0 +1,125 @@
+table 'Fait_Historique des ventes'
+	lineageTag: 84978325-d289-49d2-bbf7-31bdb822fe6c
+
+	column 'ID Magasin'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 76424b57-35b3-4fcd-bf9d-44f0cc0f1789
+		summarizeBy: none
+		sourceColumn: ID Magasin
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Jour de la semaine'
+		dataType: int64
+		formatString: 0
+		lineageTag: 367fbad7-6f12-4459-841b-d5b5c9d683f7
+		summarizeBy: sum
+		sourceColumn: Jour de la semaine
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: e4bb53cd-2ce6-4fcb-b063-bef68ad77cfa
+		summarizeBy: none
+		sourceColumn: Date
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Chiffre d''affaires'
+		dataType: int64
+		formatString: 0
+		lineageTag: cb3a17ed-fcad-4889-a9db-52058a767077
+		summarizeBy: sum
+		sourceColumn: Chiffre d'affaires
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Nombre de clients'
+		dataType: int64
+		formatString: 0
+		lineageTag: 2b807102-e856-4ace-815a-94194edf6d67
+		summarizeBy: sum
+		sourceColumn: Nombre de clients
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Magasin ouvert'
+		dataType: int64
+		formatString: 0
+		lineageTag: 008af98d-ab7e-4385-9bac-38164039a3b9
+		summarizeBy: sum
+		sourceColumn: Magasin ouvert
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Promotion active'
+		dataType: int64
+		formatString: 0
+		lineageTag: 8574786b-3162-4f72-9ca7-4a2635c16ba0
+		summarizeBy: sum
+		sourceColumn: Promotion active
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Jour férié national'
+		dataType: string
+		lineageTag: 9faf7978-92ba-425a-81f6-c23e3cc9d670
+		summarizeBy: none
+		sourceColumn: Jour férié national
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Jour férié scolaire'
+		dataType: int64
+		formatString: 0
+		lineageTag: 57dd4743-fcec-4214-a64a-d5b5b89b971f
+		summarizeBy: sum
+		sourceColumn: Jour férié scolaire
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Fait_Historique des ventes' = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\sebas\Downloads\archive\train.csv"),[Delimiter=",", Columns=9, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+				    #"En-têtes promus" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Type modifié" = Table.TransformColumnTypes(#"En-têtes promus",{
+				        {"Store", Int64.Type},
+				        {"DayOfWeek", Int64.Type},
+				        {"Date", type date},
+				        {"Sales", Int64.Type},
+				        {"Customers", Int64.Type},
+				        {"Open", Int64.Type},
+				        {"Promo", Int64.Type},
+				        {"StateHoliday", type text},
+				        {"SchoolHoliday", Int64.Type}
+				    }),
+				    #"Colonnes renommées" = Table.RenameColumns(#"Type modifié",{
+				        {"Store", "ID Magasin"},
+				        {"DayOfWeek", "Jour de la semaine"},
+				        {"Sales", "Chiffre d'affaires"},
+				        {"Customers", "Nombre de clients"},
+				        {"Open", "Magasin ouvert"},
+				        {"Promo", "Promotion active"},
+				        {"StateHoliday", "Jour férié national"},
+				        {"SchoolHoliday", "Jour férié scolaire"}
+				    })
+				in
+				    #"Colonnes renommées"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

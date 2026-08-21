@@ -1,0 +1,178 @@
+table Dim_Calendrier
+	lineageTag: 9a2e403c-2844-4227-8166-43557c4eb144
+	dataCategory: Time
+
+	column Date
+		isUnique
+		isKey
+		formatString: dd/MM/yyyy
+		lineageTag: 802cd32e-9880-4cb5-a5b6-5a80700d9541
+		dataCategory: PaddedDateTableDates
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Annee
+		formatString: 0
+		lineageTag: f6e69932-b9e2-400f-88d5-97dd25d033ac
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Annee]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Trimestre No'
+		isHidden
+		formatString: 0
+		lineageTag: 41591c50-f0d7-42e8-a278-eb3d54e97007
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Trimestre No]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Trimestre
+		lineageTag: 519b8423-49c4-4f03-8398-9e934f664df6
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Trimestre]
+		sortByColumn: 'Trimestre No'
+
+	column 'Mois No'
+		isHidden
+		formatString: 0
+		lineageTag: 96463d19-de49-4cb8-817b-2e798da237f3
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Mois No]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Mois
+		lineageTag: ad4fffe8-49ef-4483-999f-1685bd8ab761
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Mois]
+		sortByColumn: 'Mois No'
+
+	column 'Mois Abrege'
+		lineageTag: 288f94ad-6cf3-483b-8d5a-bb0d09e9d8a1
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Mois Abrege]
+		sortByColumn: 'Mois No'
+
+	column 'Semaine No'
+		formatString: 0
+		lineageTag: 1c9cf7aa-95ab-40cb-8cad-b9c731a6855f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Semaine No]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Jour No'
+		formatString: 0
+		lineageTag: 4a698a6c-3e72-4e79-ad0d-be1bc645e94f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Jour No]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Jour Semaine No'
+		isHidden
+		formatString: 0
+		lineageTag: a3b5b0e9-09cb-4ecc-8a32-fad0482cd764
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Jour Semaine No]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Jour Semaine'
+		lineageTag: 845d79e7-dc54-446e-ab1f-e8ea0d835568
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Jour Semaine]
+		sortByColumn: 'Jour Semaine No'
+
+	column 'Jour Semaine Abrege'
+		lineageTag: 970145b2-0a5f-405e-b576-b40a2174f2a7
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Jour Semaine Abrege]
+		sortByColumn: 'Jour Semaine No'
+
+	column 'Est Weekend'
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: bed7d439-b10a-499e-ab91-09266a5eaaad
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Est Weekend]
+
+	column 'Annee Mois'
+		lineageTag: f2eaec43-e8bb-4f3d-9282-a0eb6efd4a9a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Annee Mois]
+		sortByColumn: 'Annee Mois No'
+
+	column 'Annee Trimestre'
+		lineageTag: e0651b5a-c150-4f7a-9dc1-7ae27cc05fc0
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Annee Trimestre]
+		sortByColumn: 'Annee Trimestre No'
+
+	column 'Annee Mois No'
+		isHidden
+		formatString: 0
+		lineageTag: 64715db7-137b-4050-9184-4a0bc26107ae
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Annee Mois No]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Annee Trimestre No'
+		isHidden
+		formatString: 0
+		lineageTag: c34a6ef5-caf2-4f48-9e2f-12bfc42b6200
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Annee Trimestre No]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Calendrier = calculated
+		mode: import
+		source =
+				ADDCOLUMNS(
+				    CALENDARAUTO(),
+				    "Annee", YEAR([Date]),
+				    "Trimestre No", QUARTER([Date]),
+				    "Trimestre", "T" & QUARTER([Date]),
+				    "Mois No", MONTH([Date]),
+				    "Mois", FORMAT([Date], "MMMM", "fr-FR"),
+				    "Mois Abrege", FORMAT([Date], "MMM", "fr-FR"),
+				    "Semaine No", WEEKNUM([Date], 2),
+				    "Jour No", DAY([Date]),
+				    "Jour Semaine No", WEEKDAY([Date], 2),
+				    "Jour Semaine", FORMAT([Date], "DDDD", "fr-FR"),
+				    "Jour Semaine Abrege", FORMAT([Date], "DDD", "fr-FR"),
+				    "Est Weekend", IF(WEEKDAY([Date], 2) >= 6, TRUE(), FALSE()),
+				    "Annee Mois", FORMAT([Date], "YYYY-MM"),
+				    "Annee Mois No", YEAR([Date]) * 100 + MONTH([Date]),
+				    "Annee Trimestre", YEAR([Date]) & "-T" & QUARTER([Date]),
+				    "Annee Trimestre No", YEAR([Date]) * 10 + QUARTER([Date])
+				)
+
+	annotation PBI_Id = 9d1f0b9b65f5400ca6ffcd26bacc9b16
+

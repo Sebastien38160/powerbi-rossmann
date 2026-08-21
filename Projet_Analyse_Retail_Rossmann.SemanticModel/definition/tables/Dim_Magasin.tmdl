@@ -1,0 +1,98 @@
+table Dim_Magasin
+	lineageTag: ed1a4bc6-ff88-4956-b492-b563839b2b44
+
+	column 'ID Magasin'
+		dataType: int64
+		formatString: 0
+		lineageTag: d31fd59a-2113-42f3-8fbc-96d49ace46df
+		summarizeBy: none
+		sourceColumn: ID Magasin
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Type de magasin'
+		dataType: string
+		lineageTag: f51df1b3-029c-4084-845f-9a969fbd5bf9
+		summarizeBy: none
+		sourceColumn: Type de magasin
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Promo2 Active'
+		dataType: int64
+		formatString: 0
+		lineageTag: c28c5ced-8ec3-4cb2-9239-c00a750e6fdb
+		summarizeBy: none
+		sourceColumn: Promo2 Active
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Promo2 Depuis semaine'
+		dataType: double
+		lineageTag: 601ee7f1-31be-4358-a82d-4836ec8466cf
+		summarizeBy: none
+		sourceColumn: Promo2 Depuis semaine
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Promo2 Depuis année'
+		dataType: double
+		lineageTag: b9c0cc5a-e776-4d97-8e2c-54787cfa8931
+		summarizeBy: none
+		sourceColumn: Promo2 Depuis année
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Dim_Magasin = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\sebas\Downloads\archive\store.csv"),[Delimiter=",", Columns=10, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+				    #"En-têtes promus" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Type modifié" = Table.TransformColumnTypes(#"En-têtes promus",{
+				        {"Store", Int64.Type},
+				        {"StoreType", type text},
+				        {"Assortment", type text},
+				        {"CompetitionDistance", Int64.Type},
+				        {"CompetitionOpenSinceMonth", Int64.Type},
+				        {"CompetitionOpenSinceYear", Int64.Type},
+				        {"Promo2", Int64.Type},
+				        {"Promo2SinceWeek", Int64.Type},
+				        {"Promo2SinceYear", Int64.Type},
+				        {"PromoInterval", type text}
+				    }),
+				    // Modification du code M, pour renommer toutes les colonnes de la table
+				    #"Colonnes renommées" = Table.RenameColumns(#"Type modifié",{
+				        {"Store", "ID Magasin"},
+				        {"StoreType", "Type de magasin"},
+				        {"Assortment", "Assortiment"},
+				        {"CompetitionDistance", "Distance concurrence (m)"},
+				        {"CompetitionOpenSinceMonth", "Mois ouverture concurrence"},
+				        {"CompetitionOpenSinceYear", "Année ouverture concurrence"},
+				        {"Promo2", "Promo2 Active"},
+				        {"Promo2SinceWeek", "Promo2 Depuis semaine"},
+				        {"Promo2SinceYear", "Promo2 Depuis année"},
+				        {"PromoInterval", "Intervalle promo"}
+				    }),
+				    // Remplacé les valeurs null par 0
+				    #"Valeur remplacée" = Table.ReplaceValue(#"Colonnes renommées",null,0,Replacer.ReplaceValue,{"Mois ouverture concurrence"}),
+				    // Remplacer les valeurs null par 0
+				    #"Valeur remplacée1" = Table.ReplaceValue(#"Valeur remplacée",null,0,Replacer.ReplaceValue,{"Année ouverture concurrence"}),
+				    #"Valeur remplacée2" = Table.ReplaceValue(#"Valeur remplacée1",null,0,Replacer.ReplaceValue,{"Promo2 Depuis semaine", "Promo2 Depuis année"}),
+				    #"Valeur remplacée3" = Table.ReplaceValue(#"Valeur remplacée2","","Aucune",Replacer.ReplaceValue,{"Intervalle promo"}),
+				    #"Doublons supprimés" = Table.Distinct(#"Valeur remplacée3", {"ID Magasin"}),
+				    #"Colonnes supprimées" = Table.RemoveColumns(#"Doublons supprimés",{"Intervalle promo", "Assortiment", "Distance concurrence (m)", "Année ouverture concurrence", "Mois ouverture concurrence"}),
+				    #"Texte en majuscules" = Table.TransformColumns(#"Colonnes supprimées",{{"Type de magasin", Text.Upper, type text}})
+				in
+				    #"Texte en majuscules"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

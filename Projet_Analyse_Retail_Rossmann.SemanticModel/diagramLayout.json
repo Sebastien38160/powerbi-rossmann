@@ -1,0 +1,109 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 474,
+            "y": 347
+          },
+          "nodeIndex": "Fait_Historique des ventes",
+          "nodeLineageTag": "84978325-d289-49d2-bbf7-31bdb822fe6c",
+          "size": {
+            "height": 378.55374592833869,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 38.18475118062986,
+            "y": 0
+          },
+          "nodeIndex": "Dim_Magasin",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 883.36163941535983,
+            "y": 34.259883455092236
+          },
+          "nodeIndex": "Dim_Prévisions",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1149.189917550691,
+            "y": 0
+          },
+          "nodeIndex": "_Mesures",
+          "nodeLineageTag": "b8926a1b-7fd1-4649-8258-b04a36b4e031",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 445.70826822411175,
+            "y": 0
+          },
+          "nodeIndex": "Dim_Calendrier",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1150.5011969483885,
+            "y": 358.07328990228018
+          },
+          "nodeIndex": "Mesure Sélectionnée",
+          "nodeLineageTag": "0724ec57-aa61-43c6-9589-e5bd3fd91e18",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1147.3439285850448,
+            "y": 214.97231270358307
+          },
+          "nodeIndex": "Temps",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "Toutes les tables",
+      "zoomValue": 79.947916666666657,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "Toutes les tables",
+  "defaultDiagram": "Toutes les tables"
+}

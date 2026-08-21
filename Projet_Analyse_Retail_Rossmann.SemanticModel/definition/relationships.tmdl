@@ -1,0 +1,12 @@
+relationship AutoDetected_346110c9-06f5-4f69-b26b-60b943a4ed9b
+	fromColumn: 'Fait_Historique des ventes'.'ID Magasin'
+	toColumn: Dim_Magasin.'ID Magasin'
+
+relationship 6f51032c-21ce-17db-c1be-3f0ec1169b02
+	fromColumn: 'Fait_Historique des ventes'.'ID Magasin'
+	toColumn: Dim_Prévisions.'ID Magasin'
+
+relationship 917b2126-284e-47ea-235f-408d819765c9
+	fromColumn: 'Fait_Historique des ventes'.Date
+	toColumn: Dim_Calendrier.Date
+

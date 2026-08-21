@@ -1,0 +1,49 @@
+// =============================================================
+// Table de dates continue et complète
+// À créer via : Modélisation > Nouvelle table
+// Remplacer 'Fait_Historique des ventes'[Date] par la colonne
+// de date de votre propre table de faits.
+// =============================================================
+
+Dim_Calendrier =
+VAR _debut = DATE ( YEAR ( MIN ( 'Fait_Historique des ventes'[Date] ) ), 1, 1 )
+VAR _fin   = DATE ( YEAR ( MAX ( 'Fait_Historique des ventes'[Date] ) ), 12, 31 )
+RETURN
+ADDCOLUMNS (
+    CALENDAR ( _debut, _fin ),
+    "Annee",            YEAR ( [Date] ),
+    "Trimestre No",     QUARTER ( [Date] ),
+    "Trimestre",        "T" & QUARTER ( [Date] ),
+    "Numero du mois",   MONTH ( [Date] ),
+    "Nom du mois",      FORMAT ( [Date], "MMMM", "fr-FR" ),
+    "Mois Abrege",      FORMAT ( [Date], "MMM", "fr-FR" ),
+    "Annee Mois",       YEAR ( [Date] ) * 100 + MONTH ( [Date] ),
+    "Annee Mois texte", FORMAT ( [Date], "YYYY-MM" ),
+    "Semaine ISO",      WEEKNUM ( [Date], 21 ),
+    "Annee Semaine",
+        YEAR ( [Date] + 4 - WEEKDAY ( [Date], 2 ) ) & "-S"
+            & FORMAT ( WEEKNUM ( [Date], 21 ), "00" ),
+    "Jour Semaine No",  WEEKDAY ( [Date], 2 ),
+    "Nom du jour",      FORMAT ( [Date], "DDDD", "fr-FR" ),
+    "Est Weekend",      WEEKDAY ( [Date], 2 ) >= 6,
+    "Type de jour",     IF ( WEEKDAY ( [Date], 2 ) >= 6, "Week-end", "Jour ouvré" ),
+    "Est passe",        [Date] <= TODAY ()
+)
+
+// -------------------------------------------------------------
+// Après création :
+//   1. Modélisation > Marquer comme table de dates > colonne [Date]
+//   2. Trier "Nom du mois" par "Numero du mois"
+//      Trier "Nom du jour" par "Jour Semaine No"
+//   3. Masquer "Numero du mois", "Jour Semaine No", "Trimestre No",
+//      "Annee Mois"
+//   4. Créer la relation vers la table de faits
+//
+// Points d'attention :
+//   - YEAR() et non FORMAT("YYYY") : une année en texte ne se
+//     calcule pas et se trie mal.
+//   - L'année ISO se calcule sur le jeudi de la semaine. Sans ça,
+//     le 30/12/2024 serait étiqueté 2024-S01 au lieu de 2025-S01.
+//   - La locale "fr-FR" est explicite : sans elle, les noms de mois
+//     suivent la langue du poste qui ouvre le rapport.
+// -------------------------------------------------------------

@@ -1,0 +1,53 @@
+table 'Mesure Sélectionnée'
+	lineageTag: 0724ec57-aa61-43c6-9589-e5bd3fd91e18
+
+	column 'Mesure Sélectionnée'
+		lineageTag: 66e9d7d4-add4-41c7-b638-1a3019f3fc69
+		summarizeBy: none
+		sourceColumn: [Value1]
+		sortByColumn: 'Mesure Sélectionnée Commande'
+
+		relatedColumnDetails
+			groupByColumn: 'Mesure Sélectionnée Champs'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Mesure Sélectionnée Champs'
+		isHidden
+		lineageTag: 3963102f-c14f-40f7-9713-0b0811a6dc95
+		summarizeBy: none
+		sourceColumn: [Value2]
+		sortByColumn: 'Mesure Sélectionnée Commande'
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Mesure Sélectionnée Commande'
+		isHidden
+		formatString: 0
+		lineageTag: c188d6bc-747f-416b-94ed-2da1675eef34
+		summarizeBy: sum
+		sourceColumn: [Value3]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Mesure Sélectionnée' = calculated
+		mode: import
+		source =
+				{
+				    ("CA par Client", NAMEOF('_Mesures'[CA par Client]), 0),
+				    ("CA Total", NAMEOF('_Mesures'[CA Total]), 1),
+				    ("Nombre de ventes", NAMEOF('_Mesures'[Nombre de ventes]), 2),
+				    ("Clients Total", NAMEOF('_Mesures'[Passage en Caisse]), 3),
+				    ("Jours Ouverts", NAMEOF('_Mesures'[Jours Ouverts]), 4),
+				    ("Clients Moyens par Jour", NAMEOF('_Mesures'[Clients Moyens par Jour]), 5),
+				    ("CA Moyen par Jour", NAMEOF('_Mesures'[CA Moyen par Jour]), 6)
+				}
+
+	annotation PBI_Id = 2f0ad149673f43afae16d41d795acb33
+

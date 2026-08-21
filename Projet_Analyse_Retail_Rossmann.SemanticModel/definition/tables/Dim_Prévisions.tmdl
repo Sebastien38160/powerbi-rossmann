@@ -1,0 +1,94 @@
+table Dim_Prévisions
+	lineageTag: c0d1ae90-cdfd-45f1-8dfd-0b46589863fe
+
+	column 'ID Magasin'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2b9290ac-0dcf-461c-a5c1-03afaa31940e
+		summarizeBy: none
+		sourceColumn: ID Magasin
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Jour de la semaine'
+		dataType: int64
+		formatString: 0
+		lineageTag: 97446dd2-b88a-40f1-abb3-079d6487943b
+		summarizeBy: none
+		sourceColumn: Jour de la semaine
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 5cd53099-d534-4430-90b0-5310aa9aff23
+		summarizeBy: none
+		sourceColumn: Date
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Magasin ouvert'
+		dataType: int64
+		formatString: 0
+		lineageTag: 7b2cdfd6-eca6-4ebb-aed2-0368847be305
+		summarizeBy: none
+		sourceColumn: Magasin ouvert
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Promotion active'
+		dataType: int64
+		formatString: 0
+		lineageTag: 65fc5e52-2c85-4038-85c7-b1261024e9dd
+		summarizeBy: none
+		sourceColumn: Promotion active
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Prévisions = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\sebas\Downloads\archive\test.csv"),[Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+				    #"En-têtes promus" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Type modifié" = Table.TransformColumnTypes(#"En-têtes promus",{
+				        {"Id", Int64.Type},
+				        {"Store", Int64.Type},
+				        {"DayOfWeek", Int64.Type},
+				        {"Date", type date},
+				        {"Open", Int64.Type},
+				        {"Promo", Int64.Type},
+				        {"StateHoliday", Int64.Type},
+				        {"SchoolHoliday", Int64.Type}
+				    }),
+				    // Modification du Code M, pour le renommage noms des colonnes de cette table
+				    #"Colonnes renommées" = Table.RenameColumns(#"Type modifié",{
+				        {"Id", "ID Test"},
+				        {"Store", "ID Magasin"},
+				        {"DayOfWeek", "Jour de la semaine"},
+				        {"Open", "Magasin ouvert"},
+				        {"Promo", "Promotion active"},
+				        {"StateHoliday", "Jour férié national"},
+				        {"SchoolHoliday", "Jour férié scolaire"}
+				    }),
+				    #"Lignes filtrées1" = Table.SelectRows(#"Colonnes renommées", each [Magasin ouvert] <> null and [Magasin ouvert] <> ""),
+				    #"Colonnes supprimées" = Table.RemoveColumns(#"Lignes filtrées1",{"Jour férié national", "Jour férié scolaire"}),
+				    #"Doublons supprimés" = Table.Distinct(#"Colonnes supprimées", {"ID Test"}),
+				    #"Doublons supprimés1" = Table.Distinct(#"Doublons supprimés", {"ID Magasin"}),
+				    #"Colonnes supprimées1" = Table.RemoveColumns(#"Doublons supprimés1",{"ID Test"})
+				in
+				    #"Colonnes supprimées1"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

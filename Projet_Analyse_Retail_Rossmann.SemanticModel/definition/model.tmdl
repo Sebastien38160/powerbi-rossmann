@@ -1,0 +1,27 @@
+model Model
+	culture: fr-FR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: fr-FR
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["Dim_Magasin","Dim_Prévisions","Fait_Historique des ventes"]
+
+annotation PBI_ProTooling = ["MCP-PBIModeling","CalcGroup","TMDLView_Desktop","DevMode"]
+
+annotation __TEdtr = 1
+
+ref table Dim_Magasin
+ref table Dim_Prévisions
+ref table 'Fait_Historique des ventes'
+ref table Dim_Calendrier
+ref table _Mesures
+ref table Temps
+ref table 'Mesure Sélectionnée'
+
+ref cultureInfo fr-FR
+

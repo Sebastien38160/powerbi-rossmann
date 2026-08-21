@@ -1,0 +1,1078 @@
+createOrReplace
+
+	model Model
+		culture: fr-FR
+		defaultPowerBIDataSourceVersion: powerBI_V3
+		discourageImplicitMeasures
+		sourceQueryCulture: fr-FR
+		dataAccessOptions
+			legacyRedirects
+			returnErrorValuesAsNull
+
+		table Dim_Magasin
+			lineageTag: ed1a4bc6-ff88-4956-b492-b563839b2b44
+
+			column 'ID Magasin'
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: d31fd59a-2113-42f3-8fbc-96d49ace46df
+				summarizeBy: none
+				sourceColumn: ID Magasin
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Type de magasin'
+				dataType: string
+				lineageTag: f51df1b3-029c-4084-845f-9a969fbd5bf9
+				summarizeBy: none
+				sourceColumn: Type de magasin
+
+				annotation SummarizationSetBy = Automatic
+
+			column Assortiment
+				dataType: string
+				lineageTag: c371bd35-c24f-4538-a64a-471a4e5cb142
+				summarizeBy: none
+				sourceColumn: Assortiment
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Distance concurrence (m)'
+				dataType: int64
+				formatString: 0
+				lineageTag: 77b60ecc-34b2-438a-9ab0-4d2fefc603e4
+				summarizeBy: none
+				sourceColumn: Distance concurrence (m)
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Mois ouverture concurrence'
+				dataType: double
+				lineageTag: 915c5b67-0206-4352-87f4-ac9a657f0d47
+				summarizeBy: none
+				sourceColumn: Mois ouverture concurrence
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column 'Année ouverture concurrence'
+				dataType: int64
+				lineageTag: 62171c39-17d7-45a5-b89b-ada37db16ccb
+				summarizeBy: none
+				sourceColumn: Année ouverture concurrence
+
+				changedProperty = DataType
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column 'Promo2 Active'
+				dataType: int64
+				formatString: 0
+				lineageTag: c28c5ced-8ec3-4cb2-9239-c00a750e6fdb
+				summarizeBy: none
+				sourceColumn: Promo2 Active
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Promo2 Depuis semaine'
+				dataType: double
+				lineageTag: 601ee7f1-31be-4358-a82d-4836ec8466cf
+				summarizeBy: none
+				sourceColumn: Promo2 Depuis semaine
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column 'Promo2 Depuis année'
+				dataType: double
+				lineageTag: b9c0cc5a-e776-4d97-8e2c-54787cfa8931
+				summarizeBy: none
+				sourceColumn: Promo2 Depuis année
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column 'Intervalle promo'
+				dataType: string
+				lineageTag: 9577af7e-f69a-4bc7-b92e-554a7752cee2
+				summarizeBy: none
+				sourceColumn: Intervalle promo
+
+				annotation SummarizationSetBy = Automatic
+
+			partition Dim_Magasin = m
+				mode: import
+				source =
+						let
+						    Source = Csv.Document(File.Contents("C:\Users\sebas\Downloads\archive\store.csv"),[Delimiter=",", Columns=10, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+						    #"En-têtes promus" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+						    #"Type modifié" = Table.TransformColumnTypes(#"En-têtes promus",{
+						        {"Store", Int64.Type},
+						        {"StoreType", type text},
+						        {"Assortment", type text},
+						        {"CompetitionDistance", Int64.Type},
+						        {"CompetitionOpenSinceMonth", Int64.Type},
+						        {"CompetitionOpenSinceYear", Int64.Type},
+						        {"Promo2", Int64.Type},
+						        {"Promo2SinceWeek", Int64.Type},
+						        {"Promo2SinceYear", Int64.Type},
+						        {"PromoInterval", type text}
+						    }),
+						    // Modification du code M, pour renommer toutes les colonnes de la table
+						    #"Colonnes renommées" = Table.RenameColumns(#"Type modifié",{
+						        {"Store", "ID Magasin"},
+						        {"StoreType", "Type de magasin"},
+						        {"Assortment", "Assortiment"},
+						        {"CompetitionDistance", "Distance concurrence (m)"},
+						        {"CompetitionOpenSinceMonth", "Mois ouverture concurrence"},
+						        {"CompetitionOpenSinceYear", "Année ouverture concurrence"},
+						        {"Promo2", "Promo2 Active"},
+						        {"Promo2SinceWeek", "Promo2 Depuis semaine"},
+						        {"Promo2SinceYear", "Promo2 Depuis année"},
+						        {"PromoInterval", "Intervalle promo"}
+						    }),
+						    // Remplacé les valeurs null par 0
+						    #"Valeur remplacée" = Table.ReplaceValue(#"Colonnes renommées",null,0,Replacer.ReplaceValue,{"Mois ouverture concurrence"}),
+						    // Remplacer les valeurs null par 0
+						    #"Valeur remplacée1" = Table.ReplaceValue(#"Valeur remplacée",null,0,Replacer.ReplaceValue,{"Année ouverture concurrence"}),
+						    #"Valeur remplacée2" = Table.ReplaceValue(#"Valeur remplacée1",null,0,Replacer.ReplaceValue,{"Promo2 Depuis semaine", "Promo2 Depuis année"}),
+						    #"Valeur remplacée3" = Table.ReplaceValue(#"Valeur remplacée2","","Aucune",Replacer.ReplaceValue,{"Intervalle promo"}),
+						    #"Doublons supprimés" = Table.Distinct(#"Valeur remplacée3", {"ID Magasin"})
+						in
+						    #"Doublons supprimés"
+
+			annotation PBI_NavigationStepName = Navigation
+
+			annotation PBI_ResultType = Table
+
+		table Dim_Prévisions
+			lineageTag: c0d1ae90-cdfd-45f1-8dfd-0b46589863fe
+
+			column 'ID Magasin'
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 2b9290ac-0dcf-461c-a5c1-03afaa31940e
+				summarizeBy: none
+				sourceColumn: ID Magasin
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Jour de la semaine'
+				dataType: int64
+				formatString: 0
+				lineageTag: 97446dd2-b88a-40f1-abb3-079d6487943b
+				summarizeBy: none
+				sourceColumn: Jour de la semaine
+
+				annotation SummarizationSetBy = Automatic
+
+			column Date
+				dataType: dateTime
+				isHidden
+				formatString: Long Date
+				lineageTag: 5cd53099-d534-4430-90b0-5310aa9aff23
+				summarizeBy: none
+				sourceColumn: Date
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation UnderlyingDateTimeDataType = Date
+
+			column 'Magasin ouvert'
+				dataType: int64
+				formatString: 0
+				lineageTag: 7b2cdfd6-eca6-4ebb-aed2-0368847be305
+				summarizeBy: none
+				sourceColumn: Magasin ouvert
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Promotion active'
+				dataType: int64
+				formatString: 0
+				lineageTag: 65fc5e52-2c85-4038-85c7-b1261024e9dd
+				summarizeBy: none
+				sourceColumn: Promotion active
+
+				annotation SummarizationSetBy = Automatic
+
+			partition Dim_Prévisions = m
+				mode: import
+				source =
+						let
+						    Source = Csv.Document(File.Contents("C:\Users\sebas\Downloads\archive\test.csv"),[Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+						    #"En-têtes promus" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+						    #"Type modifié" = Table.TransformColumnTypes(#"En-têtes promus",{
+						        {"Id", Int64.Type},
+						        {"Store", Int64.Type},
+						        {"DayOfWeek", Int64.Type},
+						        {"Date", type date},
+						        {"Open", Int64.Type},
+						        {"Promo", Int64.Type},
+						        {"StateHoliday", Int64.Type},
+						        {"SchoolHoliday", Int64.Type}
+						    }),
+						    // Modification du Code M, pour le renommage noms des colonnes de cette table
+						    #"Colonnes renommées" = Table.RenameColumns(#"Type modifié",{
+						        {"Id", "ID Test"},
+						        {"Store", "ID Magasin"},
+						        {"DayOfWeek", "Jour de la semaine"},
+						        {"Open", "Magasin ouvert"},
+						        {"Promo", "Promotion active"},
+						        {"StateHoliday", "Jour férié national"},
+						        {"SchoolHoliday", "Jour férié scolaire"}
+						    }),
+						    #"Lignes filtrées1" = Table.SelectRows(#"Colonnes renommées", each [Magasin ouvert] <> null and [Magasin ouvert] <> ""),
+						    #"Colonnes supprimées" = Table.RemoveColumns(#"Lignes filtrées1",{"Jour férié national", "Jour férié scolaire"}),
+						    #"Doublons supprimés" = Table.Distinct(#"Colonnes supprimées", {"ID Test"}),
+						    #"Doublons supprimés1" = Table.Distinct(#"Doublons supprimés", {"ID Magasin"}),
+						    #"Colonnes supprimées1" = Table.RemoveColumns(#"Doublons supprimés1",{"ID Test"})
+						in
+						    #"Colonnes supprimées1"
+
+			annotation PBI_NavigationStepName = Navigation
+
+			annotation PBI_ResultType = Table
+
+		table 'Fait_Historique des ventes'
+			lineageTag: 84978325-d289-49d2-bbf7-31bdb822fe6c
+
+			column 'ID Magasin'
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 76424b57-35b3-4fcd-bf9d-44f0cc0f1789
+				summarizeBy: none
+				sourceColumn: ID Magasin
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Jour de la semaine'
+				dataType: int64
+				formatString: 0
+				lineageTag: 367fbad7-6f12-4459-841b-d5b5c9d683f7
+				summarizeBy: sum
+				sourceColumn: Jour de la semaine
+
+				annotation SummarizationSetBy = Automatic
+
+			column Date
+				dataType: dateTime
+				isHidden
+				formatString: Long Date
+				lineageTag: e4bb53cd-2ce6-4fcb-b063-bef68ad77cfa
+				summarizeBy: none
+				sourceColumn: Date
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation UnderlyingDateTimeDataType = Date
+
+			column 'Chiffre d''affaires'
+				dataType: int64
+				formatString: 0
+				lineageTag: cb3a17ed-fcad-4889-a9db-52058a767077
+				summarizeBy: sum
+				sourceColumn: Chiffre d'affaires
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Nombre de clients'
+				dataType: int64
+				formatString: 0
+				lineageTag: 2b807102-e856-4ace-815a-94194edf6d67
+				summarizeBy: sum
+				sourceColumn: Nombre de clients
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Magasin ouvert'
+				dataType: int64
+				formatString: 0
+				lineageTag: 008af98d-ab7e-4385-9bac-38164039a3b9
+				summarizeBy: sum
+				sourceColumn: Magasin ouvert
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Promotion active'
+				dataType: int64
+				formatString: 0
+				lineageTag: 8574786b-3162-4f72-9ca7-4a2635c16ba0
+				summarizeBy: sum
+				sourceColumn: Promotion active
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Jour férié national'
+				dataType: string
+				lineageTag: 9faf7978-92ba-425a-81f6-c23e3cc9d670
+				summarizeBy: none
+				sourceColumn: Jour férié national
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Jour férié scolaire'
+				dataType: int64
+				formatString: 0
+				lineageTag: 57dd4743-fcec-4214-a64a-d5b5b89b971f
+				summarizeBy: sum
+				sourceColumn: Jour férié scolaire
+
+				annotation SummarizationSetBy = Automatic
+
+			partition 'Fait_Historique des ventes' = m
+				mode: import
+				source =
+						let
+						    Source = Csv.Document(File.Contents("C:\Users\sebas\Downloads\archive\train.csv"),[Delimiter=",", Columns=9, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+						    #"En-têtes promus" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+						    #"Type modifié" = Table.TransformColumnTypes(#"En-têtes promus",{
+						        {"Store", Int64.Type},
+						        {"DayOfWeek", Int64.Type},
+						        {"Date", type date},
+						        {"Sales", Int64.Type},
+						        {"Customers", Int64.Type},
+						        {"Open", Int64.Type},
+						        {"Promo", Int64.Type},
+						        {"StateHoliday", type text},
+						        {"SchoolHoliday", Int64.Type}
+						    }),
+						    #"Colonnes renommées" = Table.RenameColumns(#"Type modifié",{
+						        {"Store", "ID Magasin"},
+						        {"DayOfWeek", "Jour de la semaine"},
+						        {"Sales", "Chiffre d'affaires"},
+						        {"Customers", "Nombre de clients"},
+						        {"Open", "Magasin ouvert"},
+						        {"Promo", "Promotion active"},
+						        {"StateHoliday", "Jour férié national"},
+						        {"SchoolHoliday", "Jour férié scolaire"}
+						    })
+						in
+						    #"Colonnes renommées"
+
+			annotation PBI_NavigationStepName = Navigation
+
+			annotation PBI_ResultType = Table
+
+		table Dim_Calendrier
+			lineageTag: 9a2e403c-2844-4227-8166-43557c4eb144
+			dataCategory: Time
+
+			column Date
+				isUnique
+				isKey
+				formatString: dd/MM/yyyy
+				lineageTag: 802cd32e-9880-4cb5-a5b6-5a80700d9541
+				dataCategory: PaddedDateTableDates
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Date]
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+				annotation UnderlyingDateTimeDataType = Date
+
+			column Annee
+				formatString: 0
+				lineageTag: f6e69932-b9e2-400f-88d5-97dd25d033ac
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Annee]
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Trimestre No'
+				isHidden
+				formatString: 0
+				lineageTag: 41591c50-f0d7-42e8-a278-eb3d54e97007
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Trimestre No]
+
+				annotation SummarizationSetBy = Automatic
+
+			column Trimestre
+				lineageTag: 519b8423-49c4-4f03-8398-9e934f664df6
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Trimestre]
+				sortByColumn: 'Trimestre No'
+
+			column 'Mois No'
+				isHidden
+				formatString: 0
+				lineageTag: 96463d19-de49-4cb8-817b-2e798da237f3
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Mois No]
+
+				annotation SummarizationSetBy = Automatic
+
+			column Mois
+				lineageTag: ad4fffe8-49ef-4483-999f-1685bd8ab761
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Mois]
+				sortByColumn: 'Mois No'
+
+			column 'Mois Abrege'
+				lineageTag: 288f94ad-6cf3-483b-8d5a-bb0d09e9d8a1
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Mois Abrege]
+				sortByColumn: 'Mois No'
+
+			column 'Semaine No'
+				formatString: 0
+				lineageTag: 1c9cf7aa-95ab-40cb-8cad-b9c731a6855f
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Semaine No]
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Jour No'
+				formatString: 0
+				lineageTag: 4a698a6c-3e72-4e79-ad0d-be1bc645e94f
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Jour No]
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Jour Semaine No'
+				isHidden
+				formatString: 0
+				lineageTag: a3b5b0e9-09cb-4ecc-8a32-fad0482cd764
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Jour Semaine No]
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Jour Semaine'
+				lineageTag: 845d79e7-dc54-446e-ab1f-e8ea0d835568
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Jour Semaine]
+				sortByColumn: 'Jour Semaine No'
+
+			column 'Jour Semaine Abrege'
+				lineageTag: 970145b2-0a5f-405e-b576-b40a2174f2a7
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Jour Semaine Abrege]
+				sortByColumn: 'Jour Semaine No'
+
+			column 'Est Weekend'
+				formatString: """TRUE"";""TRUE"";""FALSE"""
+				lineageTag: bed7d439-b10a-499e-ab91-09266a5eaaad
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Est Weekend]
+
+			column 'Annee Mois'
+				lineageTag: f2eaec43-e8bb-4f3d-9282-a0eb6efd4a9a
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Annee Mois]
+				sortByColumn: 'Annee Mois No'
+
+			column 'Annee Trimestre'
+				lineageTag: e0651b5a-c150-4f7a-9dc1-7ae27cc05fc0
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Annee Trimestre]
+				sortByColumn: 'Annee Trimestre No'
+
+			column 'Annee Mois No'
+				isHidden
+				formatString: 0
+				lineageTag: 64715db7-137b-4050-9184-4a0bc26107ae
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Annee Mois No]
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Annee Trimestre No'
+				isHidden
+				formatString: 0
+				lineageTag: c34a6ef5-caf2-4f48-9e2f-12bfc42b6200
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Annee Trimestre No]
+
+				annotation SummarizationSetBy = Automatic
+
+			partition Dim_Calendrier = calculated
+				mode: import
+				source =
+						ADDCOLUMNS(
+						    CALENDARAUTO(),
+						    "Annee", YEAR([Date]),
+						    "Trimestre No", QUARTER([Date]),
+						    "Trimestre", "T" & QUARTER([Date]),
+						    "Mois No", MONTH([Date]),
+						    "Mois", FORMAT([Date], "MMMM", "fr-FR"),
+						    "Mois Abrege", FORMAT([Date], "MMM", "fr-FR"),
+						    "Semaine No", WEEKNUM([Date], 2),
+						    "Jour No", DAY([Date]),
+						    "Jour Semaine No", WEEKDAY([Date], 2),
+						    "Jour Semaine", FORMAT([Date], "DDDD", "fr-FR"),
+						    "Jour Semaine Abrege", FORMAT([Date], "DDD", "fr-FR"),
+						    "Est Weekend", IF(WEEKDAY([Date], 2) >= 6, TRUE(), FALSE()),
+						    "Annee Mois", FORMAT([Date], "YYYY-MM"),
+						    "Annee Mois No", YEAR([Date]) * 100 + MONTH([Date]),
+						    "Annee Trimestre", YEAR([Date]) & "-T" & QUARTER([Date]),
+						    "Annee Trimestre No", YEAR([Date]) * 10 + QUARTER([Date])
+						)
+
+			annotation PBI_Id = 9d1f0b9b65f5400ca6ffcd26bacc9b16
+
+		table _Mesures
+			lineageTag: b8926a1b-7fd1-4649-8258-b04a36b4e031
+
+			/// Chiffre d'affaires total
+			measure 'CA Total' = SUM('Fait_Historique des ventes'[Chiffre d'affaires])
+				formatString: \$#,0;(\$#,0);\$#,0
+				displayFolder: 01 - KPI de base
+				lineageTag: baf2abe0-ba2f-47f9-8ed9-ef3d7349ded0
+
+				annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+			/// Nombre de lignes de ventes
+			measure 'Nombre de ventes' = COUNTROWS('Fait_Historique des ventes')
+				formatString: #,0
+				displayFolder: 01 - KPI de base
+				lineageTag: 05f9b1cd-231d-4a5c-89c3-2aae982a60c5
+
+			/// Nombre total de clients
+			measure 'Clients Total' = SUM('Fait_Historique des ventes'[Nombre de clients])
+				formatString: #,0
+				displayFolder: 01 - KPI de base
+				lineageTag: aeb4d274-6539-44dd-a00c-80e7049bcfc9
+
+			/// CA moyen par jour d'ouverture
+			measure 'CA Moyen par Jour' = DIVIDE([CA Total], COUNTROWS(FILTER('Fait_Historique des ventes', 'Fait_Historique des ventes'[Magasin ouvert] = 1)))
+				formatString: \$#,0;(\$#,0);\$#,0
+				displayFolder: 01 - KPI de base
+				lineageTag: 38c26332-a6ad-416b-baf1-7edbd8cb9972
+
+			/// Nombre moyen de clients par jour d'ouverture
+			measure 'Clients Moyens par Jour' = DIVIDE([Clients Total], COUNTROWS(FILTER('Fait_Historique des ventes', 'Fait_Historique des ventes'[Magasin ouvert] = 1)))
+				formatString: #,0
+				displayFolder: 01 - KPI de base
+				lineageTag: 60807ea3-9397-4c5b-b3b9-e29e06c064b5
+
+			/// Panier moyen
+			measure 'CA par Client' = DIVIDE([CA Total], [Clients Total])
+				formatString: \$#,0;(\$#,0);\$#,0
+				displayFolder: 01 - KPI de base
+				lineageTag: ba3d35aa-fdce-448c-8968-9b5acc2c9c9b
+
+			/// Nombre de jours d'ouverture
+			measure 'Jours Ouverts' = CALCULATE(COUNTROWS('Fait_Historique des ventes'), 'Fait_Historique des ventes'[Magasin ouvert] = 1)
+				formatString: #,0
+				displayFolder: 01 - KPI de base
+				lineageTag: ea5627ac-439a-4746-9e46-ecfdf6773678
+
+			/// CA de la même période l'année précédente
+			measure 'CA Année Précédente' = CALCULATE([CA Total], SAMEPERIODLASTYEAR('Dim_Calendrier'[Date]))
+				formatString: \$#,0;(\$#,0);\$#,0
+				displayFolder: 02 - Performance temporelle
+				lineageTag: 25d39b81-87d9-416c-a317-429f8874d273
+
+			/// Évolution du CA vs année précédente
+			measure 'Croissance CA YoY %' = DIVIDE([CA Total] - [CA Année Précédente], [CA Année Précédente])
+				formatString: 0.00\ %;-0.00\ %;0.00\ %
+				displayFolder: 02 - Performance temporelle
+				lineageTag: 054bff51-8229-4eec-a302-5ee693613fd8
+
+			/// CA cumulé depuis le début de l'année
+			measure 'CA Cumul Année (YTD)' = TOTALYTD([CA Total], 'Dim_Calendrier'[Date])
+				formatString: \$#,0;(\$#,0);\$#,0
+				displayFolder: 02 - Performance temporelle
+				lineageTag: 1e3e8fcc-b564-4d85-84bc-3021a6791143
+
+			/// CA cumulé depuis le début du trimestre
+			measure 'CA Cumul Trimestre (QTD)' = TOTALQTD([CA Total], 'Dim_Calendrier'[Date])
+				formatString: #,0 €
+				displayFolder: 02 - Performance temporelle
+				lineageTag: 90b7967f-af8a-42e9-8cb7-3fb61abdda8f
+
+			/// CA cumulé depuis le début du mois
+			measure 'CA Cumul Mois (MTD)' = TOTALMTD([CA Total], 'Dim_Calendrier'[Date])
+				formatString: #,0 €
+				displayFolder: 02 - Performance temporelle
+				lineageTag: d53a04d3-e2a0-4c7c-9974-9a5851bb6fcb
+
+			/// CA du mois précédent
+			measure 'CA Mois Précédent' = CALCULATE([CA Total], PREVIOUSMONTH('Dim_Calendrier'[Date]))
+				formatString: #,0 €
+				displayFolder: 02 - Performance temporelle
+				lineageTag: e7f8614a-0057-4c39-a692-773b0ca58196
+
+			/// Évolution du CA vs mois précédent
+			measure 'Croissance CA MoM %' = DIVIDE([CA Total] - [CA Mois Précédent], [CA Mois Précédent])
+				formatString: 0\ %;-0\ %;0\ %
+				displayFolder: 02 - Performance temporelle
+				lineageTag: dead4f6d-21e8-413b-9a72-b8cd73c21519
+
+			/// Moyenne mobile du CA sur les 3 derniers mois
+			measure 'Moyenne Mobile 3 Mois' = AVERAGEX(DATESINPERIOD('Dim_Calendrier'[Date], LASTDATE('Dim_Calendrier'[Date]), -3, MONTH), CALCULATE([CA Total]))
+				formatString: #,0 €
+				displayFolder: 02 - Performance temporelle
+				lineageTag: ba6eb263-92e1-4492-b813-feb66a5f388c
+
+			/// CA réalisé lors des jours de promotion
+			measure 'CA avec Promo' = CALCULATE([CA Total], 'Fait_Historique des ventes'[Promotion active] = 1)
+				formatString: #,0 €
+				displayFolder: 03 - Promotions
+				lineageTag: 56713439-2793-47e1-a90f-b68c977cffec
+
+			/// CA réalisé hors promotion
+			measure 'CA sans Promo' = CALCULATE([CA Total], 'Fait_Historique des ventes'[Promotion active] = 0)
+				formatString: #,0 €
+				displayFolder: 03 - Promotions
+				lineageTag: c016a771-ae6c-4709-988f-d48d1e0523bc
+
+			/// Part du CA réalisé en période de promotion
+			measure 'Pourcentage du total général' = DIVIDE([Champ], COLLAPSEALL([Champ], Axe))
+				formatString: 0.0%
+				displayFolder: 03 - Promotions
+				lineageTag: bcabcd22-3b52-433a-8ea6-8685189e7b29
+
+			/// Clients lors des jours de promotion
+			measure 'Clients avec Promo' = CALCULATE([Clients Total], 'Fait_Historique des ventes'[Promotion active] = 1)
+				formatString: #,0
+				displayFolder: 03 - Promotions
+				lineageTag: 2f6480c8-1210-4d8a-8281-b55ffd1ed9c6
+
+			/// Gain de CA moyen journalier avec promo vs sans promo
+			measure 'Uplift CA Promo %' = DIVIDE(DIVIDE([CA avec Promo], CALCULATE([Jours Ouverts], 'Fait_Historique des ventes'[Promotion active] = 1)) - DIVIDE([CA sans Promo], CALCULATE([Jours Ouverts], 'Fait_Historique des ventes'[Promotion active] = 0)), DIVIDE([CA sans Promo], CALCULATE([Jours Ouverts], 'Fait_Historique des ventes'[Promotion active] = 0)))
+				formatString: +0.0%;-0.0%;0.0%
+				displayFolder: 03 - Promotions
+				lineageTag: 952518a9-6ffb-46ce-b6dc-9809f97363bf
+
+			/// CA des magasins participant à la Promo2
+			measure 'CA Promo2' = CALCULATE([CA Total], 'Dim_Magasin'[Promo2 Active] = 1)
+				formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+				displayFolder: 03 - Promotions
+				lineageTag: c1f9a4dc-3b62-480e-b22e-2304cc37a6c1
+
+			/// Nombre de magasins distincts ayant vendu
+			measure 'Nombre de Magasins Actifs' = DISTINCTCOUNT('Fait_Historique des ventes'[ID Magasin])
+				formatString: #,0
+				displayFolder: 04 - Magasins
+				lineageTag: 72e705b4-5dc4-49ca-9896-457fb3af1a24
+
+			/// CA moyen par magasin
+			measure 'CA Moyen par Magasin' = DIVIDE([CA Total], [Nombre de Magasins Actifs])
+				formatString: #,0 €
+				displayFolder: 04 - Magasins
+				lineageTag: a152ee66-2e5e-4deb-b63c-2928acef98f7
+
+			/// Clients moyens par magasin
+			measure 'Clients Moyens par Magasin' = DIVIDE([Clients Total], [Nombre de Magasins Actifs])
+				formatString: #,0
+				displayFolder: 04 - Magasins
+				lineageTag: ff4df461-9840-46b8-a81d-95fead2fb851
+
+			/// CA réalisé les jours fériés nationaux
+			measure 'CA Jours Fériés' = CALCULATE([CA Total], 'Fait_Historique des ventes'[Jour férié national] = 1)
+				formatString: #,0 €
+				displayFolder: 04 - Magasins
+				lineageTag: 721d9799-55ce-4ce0-bdeb-fb4f5e874a2d
+
+			/// Taux de jours d'ouverture sur la période
+			measure 'Taux Ouverture %' = DIVIDE([Jours Ouverts], COUNTROWS('Fait_Historique des ventes'))
+				formatString: 0.0%
+				displayFolder: 04 - Magasins
+				lineageTag: f600f8c4-4e17-46db-9edf-0fdc63ec079d
+
+			/// CA du dimanche
+			measure 'CA Dimanche' = CALCULATE([CA Total], 'Dim_Calendrier'[Jour Semaine] = 7)
+				formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+				displayFolder: 05 - Analyse temporelle
+				lineageTag: 35586939-a084-4d27-b750-ebc27680909d
+
+			/// CA réalisé le week-end
+			measure 'CA Week-end' = CALCULATE([CA Total], 'Dim_Calendrier'[Est Weekend] = TRUE())
+				formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+				displayFolder: 05 - Analyse temporelle
+				lineageTag: 8125e926-af34-4a1d-818d-ccc25b4f095f
+
+			/// CA réalisé en semaine
+			measure 'CA Semaine' = CALCULATE([CA Total], 'Dim_Calendrier'[Est Weekend] = FALSE())
+				formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+				displayFolder: 05 - Analyse temporelle
+				lineageTag: bcd86be2-845d-4d9a-b585-c7ef1d209492
+
+			/// Part du CA réalisé le week-end
+			measure 'Part CA Week-end %' = DIVIDE([CA Week-end], [CA Total])
+				formatString: 0.00\ %;-0.00\ %;0.00\ %
+				displayFolder: 05 - Analyse temporelle
+				lineageTag: 67d9b3f5-ca65-459f-88b9-62d9d84dee3f
+
+			/// Classement du magasin par CA décroissant
+			measure 'Rang CA Magasin' = RANKX(ALL('Dim_Magasin'[ID Magasin]), [CA Total],, DESC, DENSE)
+				formatString: #,0
+				displayFolder: 06 - Mesures avancées
+				lineageTag: 87c7ffd2-273d-4779-9cf6-a6729d8e9999
+
+			/// Part du magasin dans le CA total
+			measure 'Part CA Magasin %' = DIVIDE([CA Total], CALCULATE([CA Total], ALL('Dim_Magasin')))
+				formatString: 0.00%
+				displayFolder: 06 - Mesures avancées
+				lineageTag: 0439b99b-1369-4c41-9df1-1c080de0f1e8
+
+			/// Part cumulée du CA pour analyse Pareto
+			measure 'CA Cumulé Pareto %' = DIVIDE(SUMX(TOPN(RANKX(ALL('Dim_Magasin'[ID Magasin]), [CA Total],, DESC, DENSE), ALL('Dim_Magasin'[ID Magasin]), [CA Total], DESC), [CA Total]), CALCULATE([CA Total], ALL('Dim_Magasin')))
+				formatString: 0.00%
+				displayFolder: 06 - Mesures avancées
+				lineageTag: 1947b9a6-8637-4e98-b2eb-d88d21a42ac9
+
+			/// Meilleur CA sur une seule journée
+			measure 'CA Max Jour' = MAXX(VALUES('Dim_Calendrier'[Date]), CALCULATE([CA Total]))
+				formatString: #,0 €
+				displayFolder: 06 - Mesures avancées
+				lineageTag: d600b3f9-934e-4723-a828-a29fdd0b1a36
+
+			/// Plus faible CA sur un jour d'ouverture
+			measure 'CA Min Jour' = MINX(FILTER(VALUES('Dim_Calendrier'[Date]), CALCULATE([Jours Ouverts]) > 0), CALCULATE([CA Total]))
+				formatString: #,0 €
+				displayFolder: 06 - Mesures avancées
+				lineageTag: 0854bbeb-9a11-4ef3-9958-e7e30b29a702
+
+			/// Écart du magasin par rapport à la moyenne du parc
+			measure 'Écart CA vs Moyenne %' = DIVIDE([CA Total] - CALCULATE([CA Moyen par Magasin], ALL('Dim_Magasin'[ID Magasin])), CALCULATE([CA Moyen par Magasin], ALL('Dim_Magasin'[ID Magasin])))
+				formatString: +0.0%;-0.0%;0.0%
+				displayFolder: 06 - Mesures avancées
+				lineageTag: 21b2762b-5fdc-47e4-87e0-eae5c5ac665e
+
+			measure 'Croissance CA' =
+					
+					VAR growth = [Croissance CA YoY %]
+					VAR arrow =
+					    IF(growth < 0, "▼ ", "▲ ")
+					RETURN
+					arrow & FORMAT(growth, "0.0%") & " vs N-1"
+				displayFolder: 01 - KPI de base
+				lineageTag: 373f3017-e0db-4923-9940-b10ee717d018
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Couleur Croissance' =
+					
+					IF(
+					    [Croissance CA YoY %] < 0,
+					    "#D64545",   -- rouge
+					    "#2E8B57"    -- vert
+					)
+				displayFolder: 01 - KPI de base
+				lineageTag: 4b2f10f7-902c-4bb8-8066-db8ba9f08120
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Clients N-1' =
+					
+					CALCULATE(
+					    [Clients Total],
+					    SAMEPERIODLASTYEAR(Dim_Calendrier[Date]))
+				displayFolder: 01 - KPI de base
+				lineageTag: 9eeea1d0-1d7b-4313-810c-27bf84a014f6
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Croissance Clients %' =
+					
+					DIVIDE(
+					    [Clients Total]-[Clients N-1],
+					    [Clients N-1])
+				displayFolder: 01 - KPI de base
+				lineageTag: 65786e61-0a3e-4d4a-b379-209b1c3fb90c
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Croissance Clients' =
+					
+					VAR growth = [Croissance Clients %]
+					VAR arrow =
+					    IF(growth < 0, "🔴 ", "🟢 ")
+					RETURN
+					arrow & FORMAT(growth, "0.0%") & " vs N-1"
+				displayFolder: 01 - KPI de base
+				lineageTag: 4c4becb7-dc30-4a2f-bd33-4226e12f496f
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Couleur Clients' =
+					
+					IF(
+					    [Croissance Clients %] < 0,
+					    "#D64545",
+					    "#2E8B57"
+					)
+				displayFolder: 01 - KPI de base
+				lineageTag: b906fc05-d51b-4310-9fed-571a66e27029
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Croissance Clients Label' =
+					
+					VAR g = [Croissance Clients %]
+					VAR arrow = IF(g < 0, "▼ ", "▲ ")
+					RETURN
+					arrow & FORMAT(g, "+0.0%;-0.0%") & " vs N-1"
+				displayFolder: 01 - KPI de base
+				lineageTag: 3495291c-7455-4d8c-b10e-7d7b1cd404a8
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Insight + Recommandation' = ```
+					
+					VAR Mois = SELECTEDVALUE('Dim_Calendrier'[Mois])
+					VAR Croissance = [Croissance CA YoY %]
+					
+					RETURN
+					SWITCH(
+					    TRUE(),
+					
+					    Mois IN {"juillet","août"},
+					    "⚠️ Baisse saisonnière du CA" & UNICHAR(10),
+					
+					    Mois IN {"novembre","décembre"},
+					    "📈 Forte activité commerciale" & UNICHAR(10),
+					
+					    Croissance > 0,
+					    "📈 Croissance positive du CA" & UNICHAR(10) ,
+					
+					    "📉 Performance en baisse" & UNICHAR(10)
+					   
+					)
+					```
+				displayFolder: 01 - KPI de base
+				lineageTag: 658d32c6-f166-49a6-b1ac-3942834bda53
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Insight Magasin' = ```
+					
+					VAR TypeMagasin = SELECTEDVALUE(Dim_Magasin[Type de magasin], "Global")
+					
+					RETURN
+					SWITCH(
+					    TRUE(),
+					
+					    TypeMagasin = "B",
+					    "🏬 Type B : meilleure performance (CA élevé)" 
+					    & UNICHAR(10) & UNICHAR(10) &
+					    "👉 Reco : prioriser ce format et reproduire ses leviers",
+					
+					    TypeMagasin = "A",
+					    "🏪 Type A : performance intermédiaire" 
+					    & UNICHAR(10) & UNICHAR(10) &
+					    "👉 Reco : optimiser assortiment et trafic",
+					
+					    TypeMagasin = "C",
+					    "🏪 Type C : performance similaire à A" 
+					    & UNICHAR(10) & UNICHAR(10) &
+					    "👉 Reco : activer promotions ciblées",
+					
+					    TypeMagasin = "D",
+					    "🏬 Type D : performance la plus faible" 
+					    & UNICHAR(10) & UNICHAR(10) &
+					    "👉 Reco : rationaliser les coûts ou revoir le positionnement",
+					
+					    "📊 Vue globale : le type B surperforme nettement les autres formats"
+					)
+					```
+				displayFolder: 01 - KPI de base
+				lineageTag: d3e77746-e139-4be1-b72f-e7e0162e03d9
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Couleur KPI' =
+					SWITCH(
+					    SELECTEDVALUE('_Selection KPI'[KPI]),
+					    "CA Total",         "#2E86AB",
+					    "Clients Total",    "#A23B72",
+					    "CA par Client",    "#F18F01",
+					    "Jours Ouverts",    "#C73E1D",
+					    "CA Moyen par Jour","#3B1F2B",
+					    "#2E86AB"
+					)
+				formatString: @
+				displayFolder: 07 - Couleurs dynamiques
+				lineageTag: 84140dae-4fd5-4c85-92eb-c6630989c9e3
+
+			column x
+				isHidden
+				lineageTag: a60cc81c-27f7-4f17-9b71-3cff4131a9f5
+				isDefaultLabel
+				isNameInferred
+				sourceColumn: [x]
+
+			partition _Mesures = calculated
+				mode: import
+				source = ROW("x", BLANK())
+
+		table 'Groupe de calcul'
+			lineageTag: 505e0095-a129-41a1-80c2-c62f717821e8
+
+			calculationGroup
+
+				calculationItem Actuel = SELECTEDMEASURE()
+
+				calculationItem 'Cumul mois en cours (MTD)' =
+						
+						TOTALMTD(
+						    SELECTEDMEASURE(),
+						    Dim_Calendrier[Date]
+						)
+
+				calculationItem 'Cumul trimestre en cours (QTD)' =
+						
+						TOTALQTD(
+						    SELECTEDMEASURE(),
+						    Dim_Calendrier[Date]
+						)
+
+				calculationItem 'Cumul année en cours (YTD)' =
+						
+						TOTALYTD(
+						    SELECTEDMEASURE(),
+						    Dim_Calendrier[Date]
+						)
+
+				calculationItem 'Année précédente (PY)' =
+						
+						CALCULATE(
+						    SELECTEDMEASURE(),
+						    SAMEPERIODLASTYEAR(Dim_Calendrier[Date])
+						)
+
+				calculationItem 'Variation annuelle %' =
+						
+						DIVIDE(
+						    SELECTEDMEASURE()
+						        - CALCULATE(
+						            SELECTEDMEASURE(),
+						            SAMEPERIODLASTYEAR(Dim_Calendrier[Date])
+						        ),
+						    CALCULATE(
+						        SELECTEDMEASURE(),
+						        SAMEPERIODLASTYEAR(Dim_Calendrier[Date])
+						    )
+						)
+
+					formatStringDefinition = "+0%;-0%;0%"
+
+			column 'Colonne du groupe de calcul'
+				dataType: string
+				lineageTag: bb7c29bb-90b7-4b0b-b371-a252bc26e92c
+				summarizeBy: none
+				sourceColumn: Name
+				sortByColumn: Ordinal
+
+				annotation SummarizationSetBy = Automatic
+
+			column Ordinal
+				dataType: int64
+				formatString: 0
+				lineageTag: 348a6fc2-4363-4f2f-b431-8fc813799dae
+				summarizeBy: sum
+				sourceColumn: Ordinal
+
+				annotation SummarizationSetBy = Automatic
+
+		table 'Mesure Sélectionnée'
+			lineageTag: 0724ec57-aa61-43c6-9589-e5bd3fd91e18
+
+			column 'Mesure Sélectionnée'
+				lineageTag: 66e9d7d4-add4-41c7-b638-1a3019f3fc69
+				summarizeBy: none
+				sourceColumn: [Value1]
+				sortByColumn: 'Mesure Sélectionnée Commande'
+
+				relatedColumnDetails
+					groupByColumn: 'Mesure Sélectionnée Champs'
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Mesure Sélectionnée Champs'
+				isHidden
+				lineageTag: 3963102f-c14f-40f7-9713-0b0811a6dc95
+				summarizeBy: none
+				sourceColumn: [Value2]
+				sortByColumn: 'Mesure Sélectionnée Commande'
+
+				extendedProperty ParameterMetadata = {"version":3,"kind":2}
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Mesure Sélectionnée Commande'
+				isHidden
+				formatString: 0
+				lineageTag: c188d6bc-747f-416b-94ed-2da1675eef34
+				summarizeBy: sum
+				sourceColumn: [Value3]
+
+				annotation SummarizationSetBy = Automatic
+
+			partition 'Mesure Sélectionnée' = calculated
+				mode: import
+				source =
+						{
+						    ("CA par Client", NAMEOF('_Mesures'[CA par Client]), 0),
+						    ("CA Total", NAMEOF('_Mesures'[CA Total]), 1),
+						    ("Nombre de ventes", NAMEOF('_Mesures'[Nombre de ventes]), 2),
+						    ("Clients Total", NAMEOF('_Mesures'[Clients Total]), 3),
+						    ("Jours Ouverts", NAMEOF('_Mesures'[Jours Ouverts]), 4),
+						    ("Clients Moyens par Jour", NAMEOF('_Mesures'[Clients Moyens par Jour]), 5),
+						    ("CA Moyen par Jour", NAMEOF('_Mesures'[CA Moyen par Jour]), 6)
+						}
+
+			annotation PBI_Id = 2f0ad149673f43afae16d41d795acb33
+
+		relationship AutoDetected_346110c9-06f5-4f69-b26b-60b943a4ed9b
+			fromColumn: 'Fait_Historique des ventes'.'ID Magasin'
+			toColumn: Dim_Magasin.'ID Magasin'
+
+		relationship 6f51032c-21ce-17db-c1be-3f0ec1169b02
+			fromColumn: 'Fait_Historique des ventes'.'ID Magasin'
+			toColumn: Dim_Prévisions.'ID Magasin'
+
+		relationship 917b2126-284e-47ea-235f-408d819765c9
+			fromColumn: 'Fait_Historique des ventes'.Date
+			toColumn: Dim_Calendrier.Date
+
+		cultureInfo fr-FR
+
+		annotation __PBI_TimeIntelligenceEnabled = 0
+
+		annotation PBI_QueryOrder = ["Dim_Magasin","Dim_Prévisions","Fait_Historique des ventes"]
+
+		annotation PBI_ProTooling = ["MCP-PBIModeling","CalcGroup","TMDLView_Desktop"]
+
