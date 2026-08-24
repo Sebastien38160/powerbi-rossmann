@@ -139,7 +139,7 @@ Le format `.pbip` stocke le rapport et le modèle en fichiers texte : le
 contenu est lisible et comparable directement sur GitHub, contrairement au
 `.pbix`. Chaque page, chaque visuel et chaque mesure est un fichier
 consultable en ligne.
-
+📄 [Voir la synthèse de présentation (PDF)](Rossmann_Analyse_Marketing.pdf)
 ---
 
 ## Structure du dépôt
