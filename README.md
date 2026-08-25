@@ -135,11 +135,7 @@ qui permet de séparer effet parc et effet performance.
    (version de mai 2024 ou ultérieure)
 4. Mettre à jour les chemins des sources dans Power Query
 
-Le format `.pbip` stocke le rapport et le modèle en fichiers texte : le
-contenu est lisible et comparable directement sur GitHub, contrairement au
-`.pbix`. Chaque page, chaque visuel et chaque mesure est un fichier
-consultable en ligne.
-📄 [Voir la synthèse de présentation (PDF)](Rossmann_Analyse_Marketing.pdf)---
+📄 [Voir la synthèse de présentation (PDF)](https://github.com/Sebastien38160/powerbi-rossmann/blob/main/Rossmann_Analyse_Marketing.pdf)
 
 ## Structure du dépôt
 
